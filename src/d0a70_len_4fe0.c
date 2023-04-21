@@ -4,96 +4,148 @@
 
 #if VERSION_IQUE
 // TODO: remove if section is split in iQue release
-extern Addr fold_gfx_data_ROM_START;
+extern Addr imgfx_gfx_data_ROM_START;
 #endif
 
-typedef struct {
+typedef union ImgFXIntVars {
+    s32 raw[2][4];
+    struct {
+        s32 anim[4];
+        s32 color[4];
+    } args;
+    // type-specific anim args (sharing first 0x10 bytes)
+    struct {
+        s32 type;
+        s32 interval;   // always 1 or 2 in practice
+        s32 step;       // always 1 in practice
+    } anim;
+    struct {
+        Vec3i mag;
+    } wavy;
+    // type-specific color args (sharing second 0x10 bytes)
+    struct {
+        char unk_00[0x10];
+        s32 r;
+        s32 g;
+        s32 b;
+        s32 a;
+    } color;
+    struct {
+        char unk_00[0x10];
+        s32 mode;
+        s32 noiseAmt;
+        char unk_18[4];
+        s32 alphaAmt;
+    } hologram;
+    struct {
+        char unk_00[0x10];
+        ImgFXOverlayTexture* pattern;
+        s32 alpha;
+    } overlay;
+} ImgFXIntVars;
+
+typedef union ImgFXFloatVars {
+    f32 raw[2][4];
+    // type-specific anim state (sharing first 0x10 bytes)
+    struct {
+        f32 curFrame;
+        f32 curIdx;
+    } anim;
+    struct {
+        f32 phase1;
+        f32 phase2;
+        f32 phase3;
+    } wavy;
+    // type-specific color state (sharing second 0x10 bytes)
+    struct {
+        char unk_00[0x10];
+        f32 posX;
+        f32 posY;
+    } overlay;
+} ImgFXFloatVars;
+
+typedef struct ImgFXState {
     /* 0x00 */ u8 arrayIdx;
     /* 0x01 */ u8 meshType;
     /* 0x02 */ u8 renderType;
     /* 0x03 */ u8 subdivX;
     /* 0x04 */ u8 subdivY;
-    /* 0x05 */ s8 savedType1;
-    /* 0x06 */ s8 savedType2;
+    /* 0x05 */ s8 lastAnimCmd;
+    /* 0x06 */ s8 lastColorCmd;
     /* 0x07 */ char unk_07[0x1];
     /* 0x08 */ u16 firstVtxIdx;
     /* 0x0A */ u16 lastVtxIdx;
     /* 0x0C */ u16 unk_0C;
     /* 0x0E */ s16 unk_0E;
-    /* 0x10 */ s16 unk_10;
+    /* 0x10 */ s16 nextIdx;
     /* 0x14 */ s32 flags;
     /* 0x18 */ char unk_18[0x4];
-    /* 0x1C */ s32 unk_1C[2][4];
-    /* 0x3C */ f32 unk_3C[2][4];
-    /* 0x5C */ u8* buf;
-    /* 0x60 */ u16 bufSize;
+    /* 0x1C */ ImgFXIntVars ints;
+    /* 0x3C */ ImgFXFloatVars floats;
+    /* 0x5C */ Color_RGBA8* colorBuf;
+    /* 0x60 */ u16 colorBufCount;
     /* 0x62 */ char unk_62[0x2];
-    /* 0x64 */ u8* unk_64;
+    /* 0x64 */ u8* curAnimOffset;
     /* 0x68 */ Vtx* vtxBufs[2];
     /* 0x70 */ Gfx* gfxBufs[2];
-    /* 0x78 */ s32 unk_78;
-} FoldState; // size = 0x7C
+    /* 0x78 */ s32 otherModeL;
+} ImgFXState; // size = 0x7C
 
-typedef struct FoldDataCache {
+typedef struct ImgFXCacheEntry {
     /* 0x00 */ s32* data;
     /* 0x04 */ u8 staleCooldownTimer;
     /* 0x05 */ u8 usingContextualHeap;
     /* 0x06 */ char unk_06[0x2];
-} FoldDataCache; // size = 0x8
+} ImgFXCacheEntry; // size = 0x8
 
-typedef struct FoldGfxDescriptor {
-    /* 0x00 */ Vtx* vtx;
-    /* 0x04 */ Gfx* gfx;
-    /* 0x08 */ u16 vtxCount;
+typedef struct ImgFXAnimHeader {
+    /* 0x00 */ s32 keyframesOffset;
+    /* 0x04 */ Gfx* gfxOffset; // Gfx for creating mesh from vertices
+    /* 0x08 */ u16 vtxCount; // conserved across keyframes
     /* 0x0A */ u16 gfxCount;
-    /* 0x0C */ u16 unk_0C;
-    /* 0x0E */ u16 useAbsoluteValues;
-} FoldGfxDescriptor; // size = 0x10
+    /* 0x0C */ u16 keyframesCount;
+    /* 0x0E */ u16 flags;
+} ImgFXAnimHeader; // size = 0x10
 
-typedef struct FoldRenderMode {
+enum ImgFXAnimFlags {
+    IMGFX_ANIM_FLAG_ABSOLUTE_COORDS  = 1, // image-relative (in percent) when unset
+};
+
+typedef struct ImgFXRenderMode {
     /* 0x0 */ s32 mode1;
     /* 0x4 */ s32 mode2;
     /* 0x8 */ u8 flags; // only checks TRUE so far. some kind of switch?
-} FoldRenderMode; // size = 0xC
+} ImgFXRenderMode; // size = 0xC
 
-typedef struct UnkFoldStruct {
-    /* 0x00 */ s32 raster;
-    /* 0x04 */ s32 palette;
-    /* 0x08 */ u16 width;
-    /* 0x0A */ u16 height;
-    /* 0x0C */ s32 unk_0C;
-    /* 0x10 */ s32 unk_10;
-    /* 0x14 */ Gfx* unk_14;
-} UnkFoldStruct; // size = 0x18
-
-typedef struct PackedVtx {
+// 'compressed' vertex data for animated image fx keyframes
+typedef struct ImgFXVtx {
     /* 0x00 */ s16 ob[3];
     /* 0x06 */ u8 tc[2];
     /* 0x08 */ s8 cn[3];
     /* 0x0B */ char unk_0B;
-} PackedVtx; // size = 0x0C
+} ImgFXVtx; // size = 0x0C
 
-typedef FoldState FoldStateList[90];
+typedef ImgFXState ImgFXInstanceList[MAX_IMGFX_INSTANCES];
 
 extern HeapNode heap_spriteHead;
 
 // BSS
-extern FoldImageRec D_80156920;
-extern Vtx* D_80156948[2];
-extern Vtx* fold_vtxBuf;
-extern FoldStateList* D_80156954;
+extern ImgFXWorkingTexture ImgFXCurrentTexture;
+extern Vtx* ImgFXVtxBuffers[2];
+extern Vtx* imgfx_vtxBuf;
+extern ImgFXInstanceList* ImgFXInstances;
 extern s8 D_80156958[2];
 extern s32 D_80156960[2];
 extern s32 D_80156968[2];
 extern s8 D_80156970;
-extern FoldGfxDescriptor fold_groupDescriptors[4];
+extern ImgFXAnimHeader ImgFXAnimHeaders[4];
 
 // Data
-FoldImageRec* fold_currentImage = &D_80156920;
+ImgFXWorkingTexture* ImgFXCurrentTexturePtr = &ImgFXCurrentTexture;
 
-u16 fold_vtxCount = 0;
+u16 imgfx_vtxCount = 0;
 
-Lights2 D_8014EE18 = gdSPDefLights2(144, 144, 144, 255, 255, 255, 0, 0, 120, 255, 255, 255, 0, 0, 136);
+Lights2 ImgFXLights = gdSPDefLights2(144, 144, 144, 255, 255, 255, 0, 0, 120, 255, 255, 255, 0, 0, 136);
 
 Vp D_8014EE40 = {
     .vp = {
@@ -109,9 +161,9 @@ Vp D_8014EE50 = {
     }
 };
 
-u16 D_8014EE60 = 300;
+u16 ImgFXVtxBufferCapacity = 300;
 
-Gfx DefaultFoldSetupGfx[] = {
+Gfx DefaultImgFXSetupGfx[] = {
     gsSPClearGeometryMode(G_CULL_BOTH | G_LIGHTING),
     gsSPSetGeometryMode(G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH),
     gsSPTexture(-1, -1, 0, G_TX_RENDERTILE, G_ON),
@@ -121,67 +173,86 @@ Gfx DefaultFoldSetupGfx[] = {
     gsSPEndDisplayList(),
 };
 
-FoldRenderMode D_8014EE98[17] = {
-    { 0x00441208, 0x00111208, FALSE },
-    { 0x00441208, 0x00111208, FALSE },
-    { 0x00404B40, 0x00104B40, TRUE },
-    { 0x00404B40, 0x00104B40, TRUE },
-    { 0x00441208, 0x00111208, FALSE },
-    { 0x00404B40, 0x00104B40, TRUE },
-    { 0x00441208, 0x00111208, FALSE },
-    { 0x00404B40, 0x00104B40, TRUE },
-    { 0x00404B40, 0x00104B40, TRUE },
-    { 0x00441208, 0x00111208, FALSE },
-    { 0x00404B40, 0x00104B40, TRUE },
-    { 0x00441208, 0x00111208, FALSE },
-    { 0x00404B40, 0x00104B40, TRUE },
-    { 0x00441208, 0x00111208, FALSE },
-    { 0x00441208, 0x00111208, FALSE },
-    { 0x00404B40, 0x00104B40, TRUE },
-    { 0x00441208, 0x00111208, FALSE },
+//TODO figure out bits
+ImgFXRenderMode ImgFXRenderModes[] = {
+    [IMGFX_RENDER_DEFAULT]               { 0x00441208, 0x00111208, 0 },
+    [IMGFX_RENDER_MULTIPLY_RGB]          { 0x00441208, 0x00111208, 0 },
+    [IMGFX_RENDER_MULTIPLY_ALPHA]        { 0x00404B40, 0x00104B40, IMGFX_RENDER_NO_OVERRIDE },
+    [IMGFX_RENDER_MULTIPLY_RGBA]         { 0x00404B40, 0x00104B40, IMGFX_RENDER_NO_OVERRIDE },
+    [IMGFX_RENDER_MODULATE_PRIM_RGB]     { 0x00441208, 0x00111208, 0 },
+    [IMGFX_RENDER_MODULATE_PRIM_RGBA]    { 0x00404B40, 0x00104B40, IMGFX_RENDER_NO_OVERRIDE },
+    [IMGFX_RENDER_MULTIPLY_SHADE_RGB]    { 0x00441208, 0x00111208, 0 },
+    [IMGFX_RENDER_MULTIPLY_SHADE_ALPHA]  { 0x00404B40, 0x00104B40, IMGFX_RENDER_NO_OVERRIDE },
+    [IMGFX_RENDER_MULTIPLY_SHADE_RGBA]   { 0x00404B40, 0x00104B40, IMGFX_RENDER_NO_OVERRIDE },
+    [IMGFX_RENDER_MODULATE_SHADE_RGB]    { 0x00441208, 0x00111208, 0 },
+    [IMGFX_RENDER_MODULATE_SHADE_RGBA]   { 0x00404B40, 0x00104B40, IMGFX_RENDER_NO_OVERRIDE },
+    [IMGFX_RENDER_ANIM]                  { 0x00441208, 0x00111208, 0 },
+    [IMGFX_RENDER_HOLOGRAM]              { 0x00404B40, 0x00104B40, IMGFX_RENDER_NO_OVERRIDE },
+    [IMGFX_RENDER_COLOR_FILL]            { 0x00441208, 0x00111208, 0 },
+    [IMGFX_RENDER_OVERLAY_RGB]           { 0x00441208, 0x00111208, 0 },
+    [IMGFX_RENDER_OVERLAY_RGBA]          { 0x00404B40, 0x00104B40, IMGFX_RENDER_NO_OVERRIDE },
+    [IMGFX_RENDER_UNUSED]                { 0x00441208, 0x00111208, 0 },
 };
 
-s32 fold_groupOffsets[] = {
-    0x00014358, 0x00018200, 0x0001A858, 0x0001E830, 0x00029458, 0x000314E0, 0x00033498, 0x00038988, 0x00039228,
-    0x0005B7A8, 0x0007CF10, 0x00086490, 0x00096258, 0x000A1820, 0x000ACDE8, 0x000BBF68, 0x000C0490, 0x000C49B8,
-    0x000C6150, 0x000CA380
+// all relative to imgfx_gfx_data_ROM_START
+s32 ImgFXAnimOffsets[] = {
+    [IMGFX_ANIM_SHOCK]                 0x14358,
+    [IMGFX_ANIM_SHIVER]                0x18200,
+    [IMGFX_ANIM_VERTICAL_PIPE_CURL]    0x1A858,
+    [IMGFX_ANIM_HORIZONTAL_PIPE_CURL]  0x1E830,
+    [IMGFX_ANIM_STARTLE]               0x29458,
+    [IMGFX_ANIM_FLUTTER_DOWN]          0x314E0,
+    [IMGFX_ANIM_UNFURL]                0x33498,
+    [IMGFX_ANIM_GET_IN_BED]            0x38988,
+    [IMGFX_ANIM_SPIRIT_CAPTURE]        0x39228,
+    [IMGFX_ANIM_UNUSED_1]              0x5B7A8,
+    [IMGFX_ANIM_UNUSED_2]              0x7CF10,
+    [IMGFX_ANIM_UNUSED_3]              0x86490,
+    [IMGFX_ANIM_TUTANKOOPA_GATHER]     0x96258,
+    [IMGFX_ANIM_TUTANKOOPA_SWIRL_2]    0xA1820,
+    [IMGFX_ANIM_TUTANKOOPA_SWIRL_1]    0xACDE8,
+    [IMGFX_ANIM_SHUFFLE_CARDS]         0xBBF68,
+    [IMGFX_ANIM_FLIP_CARD_1]           0xC0490,
+    [IMGFX_ANIM_FLIP_CARD_2]           0xC49B8,
+    [IMGFX_ANIM_FLIP_CARD_3]           0xC6150,
+    [IMGFX_ANIM_CYMBAL_CRUSH]          0xCA380,
 };
 
-extern FoldDataCache fold_gfxDataCache[8];
+extern ImgFXCacheEntry ImgFXDataCache[8];
 
-void fold_clear_state_gfx(FoldState* state);
-void fold_clear_state_data(FoldState* state);
-void fold_init_state(FoldState* state);
-void func_8013B0EC(FoldState* state);
-void func_8013B1B0(FoldState* state, Matrix4f mtx);
-void func_8013BC88(FoldState* state);
-void func_8013C048(FoldState* state);
-//FoldGfxDescriptor* fold_load_gfx(FoldState* state);
-void func_8013C3F0(FoldState* state);
-void func_8013CFA8(FoldState*, Matrix4f mtx);
-void func_8013DAB4(FoldState*, Matrix4f mtx);
-void func_8013E2F0(FoldState*, Matrix4f mtx);
-void func_8013E904(FoldState*, Matrix4f mtx);
-void func_8013EE48(FoldState* state);
-void func_8013EE68(FoldState* state);
-void func_8013F1F8(FoldState* state);
+void imgfx_cache_instance_data(ImgFXState* state);
+void imgfx_clear_instance_data(ImgFXState* state);
+void imgfx_init_instance(ImgFXState* state);
+void imgfx_make_mesh(ImgFXState* state);
+void imgfx_appendGfx_mesh(ImgFXState* state, Matrix4f mtx);
+void imgfx_mesh_make_strip(ImgFXState* state);
+void imgfx_mesh_make_grid(ImgFXState* state);
+//ImgFXAnimHeader* imgfx_load_anim(ImgFXState* state);
+void imgfx_mesh_anim_update(ImgFXState* state);
+void imgfx_appendGfx_mesh_basic(ImgFXState*, Matrix4f mtx);
+void imgfx_appendGfx_mesh_grid(ImgFXState*, Matrix4f mtx);
+void imgfx_appendGfx_mesh_anim(ImgFXState*, Matrix4f mtx);
+void imgfx_appendGfx_mesh_strip(ImgFXState*, Matrix4f mtx);
+void imgfx_wavy_init(ImgFXState* state);
+void imgfx_mesh_make_wavy(ImgFXState* state);
+void imgfx_mesh_load_colors(ImgFXState* state);
 
-void func_8013A370(s16 arg0) {
-    D_8014EE60 = arg0;
+void imgfx_set_vtx_buf_capacity(s16 arg0) {
+    ImgFXVtxBufferCapacity = arg0;
 }
 
-void fold_init(void) {
+void imgfx_init(void) {
     s32 i;
 
-    for (i = 0; i < ARRAY_COUNT(D_80156948); i++) {
-        D_80156948[i] = _heap_malloc(&heap_spriteHead, D_8014EE60 * sizeof(*(D_80156948[0])));
+    for (i = 0; i < ARRAY_COUNT(ImgFXVtxBuffers); i++) {
+        ImgFXVtxBuffers[i] = _heap_malloc(&heap_spriteHead, ImgFXVtxBufferCapacity * sizeof(Vtx));
     }
 
-    D_80156954 = (FoldStateList*)_heap_malloc(&heap_spriteHead, ARRAY_COUNT(*D_80156954) * sizeof((*D_80156954)[0]));
+    ImgFXInstances = (ImgFXInstanceList*)_heap_malloc(&heap_spriteHead, sizeof(ImgFXInstanceList));
 
-    for (i = 0; i < ARRAY_COUNT(*D_80156954); i++) {
-        fold_init_state(&(*D_80156954)[i]);
-        fold_clear_state_data(&(*D_80156954)[i]);
+    for (i = 0; i < ARRAY_COUNT(*ImgFXInstances); i++) {
+        imgfx_init_instance(&(*ImgFXInstances)[i]);
+        imgfx_clear_instance_data(&(*ImgFXInstances)[i]);
     }
 
     for (i = 0; i < ARRAY_COUNT(D_80156958); i++) {
@@ -191,671 +262,719 @@ void fold_init(void) {
         D_80156970 = 0;
     }
 
-    for (i = 0; i < ARRAY_COUNT(fold_gfxDataCache); i++) {
-        fold_gfxDataCache[i].data = NULL;
-        fold_gfxDataCache[i].staleCooldownTimer = 0;
-        fold_gfxDataCache[i].usingContextualHeap = FALSE;
+    for (i = 0; i < ARRAY_COUNT(ImgFXDataCache); i++) {
+        ImgFXDataCache[i].data = NULL;
+        ImgFXDataCache[i].staleCooldownTimer = 0;
+        ImgFXDataCache[i].usingContextualHeap = FALSE;
     }
 
-    fold_vtxCount = 0;
-    fold_vtxBuf = D_80156948[gCurrentDisplayContextIndex];
+    imgfx_vtxCount = 0;
+    imgfx_vtxBuf = ImgFXVtxBuffers[gCurrentDisplayContextIndex];
 }
 
 void func_8013A4D0(void) {
     s32 i;
 
-    fold_vtxBuf = D_80156948[gCurrentDisplayContextIndex];
-    fold_vtxCount = 0;
-    fold_init_state(&(*D_80156954)[0]);
+    imgfx_vtxBuf = ImgFXVtxBuffers[gCurrentDisplayContextIndex];
+    imgfx_vtxCount = 0;
+    imgfx_init_instance(&(*ImgFXInstances)[0]);
 
-    (*D_80156954)[0].flags |= FOLD_STATE_FLAG_ENABLED;
+    (*ImgFXInstances)[0].flags |= IMGFX_FLAG_IN_USE;
 
-    for (i = 1; i < ARRAY_COUNT(*D_80156954); i++) {
-        if (((*D_80156954)[i].flags & FOLD_STATE_FLAG_ENABLED) && (*D_80156954)[i].savedType1 != FOLD_TYPE_5) {
-            fold_clear_state_gfx(&(*D_80156954)[i]);
+    for (i = 1; i < ARRAY_COUNT(*ImgFXInstances); i++) {
+        if (((*ImgFXInstances)[i].flags & IMGFX_FLAG_IN_USE) && (*ImgFXInstances)[i].lastAnimCmd != IMGFX_SET_ANIM) {
+            imgfx_cache_instance_data(&(*ImgFXInstances)[i]);
         }
     }
 
-    for (i = 1; i < ARRAY_COUNT(*D_80156954); i++) {
-        if ((*D_80156954)[i].flags & FOLD_STATE_FLAG_ENABLED && (*D_80156954)[i].buf != NULL) {
-            s32 temp = (*D_80156954)[i].savedType2; // TODO find a better way to match
-
-            if (temp == FOLD_TYPE_B || (*D_80156954)[i].savedType2 == FOLD_TYPE_C) {
+    for (i = 1; i < ARRAY_COUNT(*ImgFXInstances); i++) {
+        if ((*ImgFXInstances)[i].flags & IMGFX_FLAG_IN_USE && (*ImgFXInstances)[i].colorBuf != NULL) {
+            if ((*ImgFXInstances)[i].lastColorCmd == IMGFX_COLOR_BUF_SET_MULTIPLY) {
                 continue;
             }
-
-            general_heap_free((*D_80156954)[i].buf);
-            (*D_80156954)[i].buf = NULL;
-            (*D_80156954)[i].bufSize = 0;
+            if ((*ImgFXInstances)[i].lastColorCmd == IMGFX_COLOR_BUF_SET_MODULATE) {
+                continue;
+            }
+            general_heap_free((*ImgFXInstances)[i].colorBuf);
+            (*ImgFXInstances)[i].colorBuf = NULL;
+            (*ImgFXInstances)[i].colorBufCount = 0;
         }
     }
 }
 
-void fold_add_to_gfx_cache(void* data, s8 usingContextualHeap) {
+void imgfx_add_to_cache(void* data, s8 usingContextualHeap) {
     s32 i;
 
-    for (i = 0; i < ARRAY_COUNT(fold_gfxDataCache); i++) {
-        if (fold_gfxDataCache[i].data == NULL) {
-            fold_gfxDataCache[i].data = data;
-            fold_gfxDataCache[i].staleCooldownTimer = 4;
-            fold_gfxDataCache[i].usingContextualHeap = usingContextualHeap;
+    for (i = 0; i < ARRAY_COUNT(ImgFXDataCache); i++) {
+        if (ImgFXDataCache[i].data == NULL) {
+            ImgFXDataCache[i].data = data;
+            ImgFXDataCache[i].staleCooldownTimer = 4;
+            ImgFXDataCache[i].usingContextualHeap = usingContextualHeap;
             return;
         }
     }
 }
 
-void fold_update_gfx_cache(void) {
+void imgfx_update_cache_impl(void) {
     s32 i;
 
-    for (i = 0; i < ARRAY_COUNT(fold_gfxDataCache); i++) {
-        if (fold_gfxDataCache[i].data != NULL) {
-            fold_gfxDataCache[i].staleCooldownTimer--;
+    for (i = 0; i < ARRAY_COUNT(ImgFXDataCache); i++) {
+        if (ImgFXDataCache[i].data != NULL) {
+            ImgFXDataCache[i].staleCooldownTimer--;
 
-            if (fold_gfxDataCache[i].staleCooldownTimer == 0) {
-                if (fold_gfxDataCache[i].usingContextualHeap) {
-                    heap_free(fold_gfxDataCache[i].data);
-                    fold_gfxDataCache[i].data = NULL;
+            if (ImgFXDataCache[i].staleCooldownTimer == 0) {
+                if (ImgFXDataCache[i].usingContextualHeap) {
+                    heap_free(ImgFXDataCache[i].data);
+                    ImgFXDataCache[i].data = NULL;
                 } else {
-                    general_heap_free(fold_gfxDataCache[i].data);
-                    fold_gfxDataCache[i].data = NULL;
+                    general_heap_free(ImgFXDataCache[i].data);
+                    ImgFXDataCache[i].data = NULL;
                 }
 
-                fold_gfxDataCache[i].staleCooldownTimer = 0;
-                fold_gfxDataCache[i].usingContextualHeap = FALSE;
+                ImgFXDataCache[i].staleCooldownTimer = 0;
+                ImgFXDataCache[i].usingContextualHeap = FALSE;
             }
         }
     }
 }
 
-void func_8013A6E8(void) {
-    fold_update_gfx_cache();
+void imgfx_update_cache(void) {
+    imgfx_update_cache_impl();
 }
 
-s32 func_8013A704(s32 arg0) {
-    s32 count;
-    s32 cond;
+// request some number of imgfx instances. returns the id of the first assigned instance, or -1 if not enough are free.
+s32 imgfx_get_free_instances(s32 count) {
+    s32 numAssigned;
+    s32 foundAny;
     s32 iPrev;
-    s32 ret;
+    s32 firstIdx;
     s32 i;
 
-    count = 0;
-    for (i = 1; i < ARRAY_COUNT(*D_80156954); i++) {
-        if (!((*D_80156954)[i].flags & FOLD_STATE_FLAG_ENABLED)) {
-            count++;
+    numAssigned = 0;
+    for (i = 1; i < ARRAY_COUNT(*ImgFXInstances); i++) {
+        if (!((*ImgFXInstances)[i].flags & IMGFX_FLAG_IN_USE)) {
+            numAssigned++;
         }
     }
 
-    if (count < arg0) {
+    if (numAssigned < count) {
         return -1;
     }
 
-    ret = 0;
-    cond = FALSE;
-    count = 0;
+    firstIdx = 0;
+    foundAny = FALSE;
+    numAssigned = 0;
     iPrev = -1;
-    for (i = 1; i < ARRAY_COUNT(*D_80156954); i++) {
-        if (!((*D_80156954)[i].flags & FOLD_STATE_FLAG_ENABLED)) {
-            if (!cond) {
-                ret = i;
-                cond = TRUE;
-            } else {
-                (*D_80156954)[iPrev].unk_10 = i;
-            }
+    for (i = 1; i < ARRAY_COUNT(*ImgFXInstances); i++) {
+        if ((*ImgFXInstances)[i].flags & IMGFX_FLAG_IN_USE) {
+            continue;
+        }
 
-            (*D_80156954)[i].arrayIdx = i;
-            fold_init_state(&(*D_80156954)[i]);
-            count++;
-            (*D_80156954)[i].flags |= FOLD_STATE_FLAG_ENABLED;
-            iPrev = i;
-            if (count == arg0) {
-                (*D_80156954)[i].unk_10 = -1;
-                break;
-            }
+        if (!foundAny) {
+            firstIdx = i;
+            foundAny = TRUE;
+        } else {
+            (*ImgFXInstances)[iPrev].nextIdx = i;
+        }
+
+        (*ImgFXInstances)[i].arrayIdx = i;
+        imgfx_init_instance(&(*ImgFXInstances)[i]);
+        numAssigned++;
+        (*ImgFXInstances)[i].flags |= IMGFX_FLAG_IN_USE;
+        iPrev = i;
+        if (numAssigned == count) {
+            (*ImgFXInstances)[i].nextIdx = -1;
+            break;
         }
     }
 
-    return ret;
+    return firstIdx;
 }
 
-void func_8013A854(u32 idx) {
-    if (idx < 90) {
-        (*D_80156954)[idx].flags = 0;
-        (*D_80156954)[idx].unk_10 = -1;
+void imgfx_release_instance(u32 idx) {
+    if (idx < MAX_IMGFX_INSTANCES) {
+        (*ImgFXInstances)[idx].flags = 0;
+        (*ImgFXInstances)[idx].nextIdx = -1;
     }
 }
 
-void func_8013A888(u32 idx) {
-    if (idx < 90) {
-        s32 temp_s0;
+void imgfx_release_instance_chain(u32 idx) {
+    if (idx < MAX_IMGFX_INSTANCES) {
+        s32 next;
 
         do {
-            temp_s0 = (*D_80156954)[idx].unk_10;
-            func_8013A854(idx);
-            idx = temp_s0;
-        } while (temp_s0 != -1);
+            next = (*ImgFXInstances)[idx].nextIdx;
+            imgfx_release_instance(idx);
+            idx = next;
+        } while (next != -1);
     }
 }
 
-s16 func_8013A8E0(s32 idx) {
-    // TODO find better match
-    if ((u32)idx >= 90) {
+s32 imgfx_get_next_instance(s32 idx) {
+    if (idx < 0 || idx >= MAX_IMGFX_INSTANCES) {
         return -1;
     }
 
-    if (idx >= 90) {
+    if (idx >= MAX_IMGFX_INSTANCES) {
         return 0xFF;
     } else {
-        return (*D_80156954)[idx].unk_10;
+        return (*ImgFXInstances)[idx].nextIdx;
     }
 }
 
-FoldState* fold_get_state(s32 idx) {
-    return &(*D_80156954)[idx];
+ImgFXState* imgfx_get_instance(s32 idx) {
+    return &(*ImgFXInstances)[idx];
 }
 
-void fold_clear_state_gfx(FoldState* state) {
-    if (state->unk_64 != NULL) {
-        state->unk_64 = NULL;
+void imgfx_cache_instance_data(ImgFXState* state) {
+    if (state->curAnimOffset != NULL) {
+        state->curAnimOffset = NULL;
     }
     if (state->vtxBufs[0] != NULL) {
-        fold_add_to_gfx_cache(state->vtxBufs[0], TRUE);
+        imgfx_add_to_cache(state->vtxBufs[0], TRUE);
         state->vtxBufs[0] = NULL;
     }
     if (state->vtxBufs[1] != NULL) {
-        fold_add_to_gfx_cache(state->vtxBufs[1], TRUE);
+        imgfx_add_to_cache(state->vtxBufs[1], TRUE);
         state->vtxBufs[1] = NULL;
     }
     if (state->gfxBufs[0] != NULL) {
-        fold_add_to_gfx_cache(state->gfxBufs[0], TRUE);
+        imgfx_add_to_cache(state->gfxBufs[0], TRUE);
         state->gfxBufs[0] = NULL;
     }
     if (state->gfxBufs[1] != NULL) {
-        fold_add_to_gfx_cache(state->gfxBufs[1], TRUE);
+        imgfx_add_to_cache(state->gfxBufs[1], TRUE);
         state->gfxBufs[1] = NULL;
     }
 }
 
-void fold_clear_state_data(FoldState* state) {
-    state->unk_64 = NULL;
+void imgfx_clear_instance_data(ImgFXState* state) {
+    state->curAnimOffset = NULL;
     state->vtxBufs[0] = NULL;
     state->vtxBufs[1] = NULL;
     state->gfxBufs[0] = NULL;
     state->gfxBufs[1] = NULL;
-    state->buf = NULL;
-    state->bufSize = 0;
+    state->colorBuf = NULL;
+    state->colorBufCount = 0;
 }
 
-void fold_init_state(FoldState* state) {
+void imgfx_init_instance(ImgFXState* state) {
     s32 i;
     s32 j;
 
-    state->unk_10 = -1;
-    state->savedType1 = FOLD_TYPE_NONE;
-    state->savedType2 = FOLD_TYPE_NONE;
+    state->nextIdx = -1;
+    state->lastAnimCmd = IMGFX_CLEAR;
+    state->lastColorCmd = IMGFX_CLEAR;
     state->flags = 0;
-    state->meshType = FOLD_MESH_TYPE_0;
-    state->renderType = FOLD_RENDER_TYPE_0;
+    state->meshType = IMGFX_MESH_DEFAULT;
+    state->renderType = IMGFX_RENDER_DEFAULT;
     state->firstVtxIdx = 0;
     state->lastVtxIdx = 0;
     state->unk_0C = 0;
     state->unk_0E = 0;
-    state->unk_1C[0][3] = 255;
-    state->unk_1C[1][3] = 255;
+    state->ints.raw[0][3] = 255;
+    state->ints.raw[1][3] = 255;
     state->subdivX = 0;
     state->subdivY = 0;
     state->firstVtxIdx = 0;
     state->lastVtxIdx = 0;
 
-    for (i = 0; i < ARRAY_COUNT(state->unk_1C); i++) {
-        for (j = 0; j < ARRAY_COUNT(state->unk_1C[0]); j++) {
-            state->unk_1C[i][j] = 0;
+    for (i = 0; i < ARRAY_COUNT(state->ints.raw); i++) {
+        for (j = 0; j < ARRAY_COUNT(state->ints.raw[0]); j++) {
+            state->ints.raw[i][j] = 0;
         }
     }
 
-    for (i = 0; i < ARRAY_COUNT(state->unk_3C); i++) {
-        for (j = 0; j < ARRAY_COUNT(state->unk_3C[0]); j++) {
-            state->unk_3C[i][j] = 0;
+    for (i = 0; i < ARRAY_COUNT(state->floats.raw); i++) {
+        for (j = 0; j < ARRAY_COUNT(state->floats.raw[0]); j++) {
+            state->floats.raw[i][j] = 0;
         }
     }
 }
 
-void fold_update(u32 idx, FoldType type, s32 arg2, s32 arg3, s32 arg4, s32 arg5, s32 flags) {
-    FoldState* state = &(*D_80156954)[idx];
+void imgfx_update(u32 idx, ImgFXType type, s32 imgfxArg1, s32 imgfxArg2, s32 imgfxArg3, s32 imgfxArg4, s32 flags) {
+    ImgFXState* state = &(*ImgFXInstances)[idx];
     s32 oldFlags;
     s32 t1;
+    u8 r, g, b, a;
 
-    if (!(state->flags & FOLD_STATE_FLAG_ENABLED) || (idx >= 90)) {
+    if (!(state->flags & IMGFX_FLAG_IN_USE) || (idx >= MAX_IMGFX_INSTANCES)) {
         return;
     }
 
     switch (type) {
-        case FOLD_TYPE_NONE:
-        case FOLD_TYPE_3:
+        case IMGFX_CLEAR:
+        case IMGFX_RESET:
             oldFlags = state->flags;
-            fold_clear_state_gfx(state);
-            fold_init_state(state);
+            imgfx_cache_instance_data(state);
+            imgfx_init_instance(state);
             state->flags = oldFlags;
-            state->savedType1 = FOLD_TYPE_NONE;
-            state->savedType2 = FOLD_TYPE_NONE;
-            state->meshType = FOLD_MESH_TYPE_0;
-            state->renderType = FOLD_RENDER_TYPE_0;
-            state->unk_1C[0][0] = -1;
-            state->unk_1C[1][0] = -1;
+            state->lastAnimCmd = IMGFX_CLEAR;
+            state->lastColorCmd = IMGFX_CLEAR;
+            state->meshType = IMGFX_MESH_DEFAULT;
+            state->renderType = IMGFX_RENDER_DEFAULT;
+            state->ints.raw[0][0] = -1;
+            state->ints.raw[1][0] = -1;
 
-            state->flags &= FOLD_STATE_FLAG_ENABLED;
+            state->flags &= IMGFX_FLAG_IN_USE;
             if (flags != 0) {
                 state->flags |= flags;
             } else {
                 state->flags |= flags; // required to match
             }
             return;
-        case FOLD_TYPE_1:
-            state->savedType1 = FOLD_TYPE_NONE;
-            state->renderType = FOLD_RENDER_TYPE_0;
-            state->unk_1C[0][0] = -1;
+        case IMGFX_UNK_1:
+            state->lastAnimCmd = IMGFX_CLEAR;
+            state->renderType = IMGFX_RENDER_DEFAULT;
+            state->ints.raw[0][0] = -1;
             return;
-        case FOLD_TYPE_2:
-            state->savedType2 = FOLD_TYPE_NONE;
-            state->meshType = FOLD_MESH_TYPE_0;
-            state->unk_1C[1][0] = -1;
+        case IMGFX_UNK_2:
+            state->lastColorCmd = IMGFX_CLEAR;
+            state->meshType = IMGFX_MESH_DEFAULT;
+            state->ints.raw[1][0] = -1;
             return;
-        case FOLD_TYPE_11:
-            if (state->buf != NULL) {
-                heap_free(state->buf);
+        case IMGFX_ALLOC_COLOR_BUF:
+            if (state->colorBuf != NULL) {
+                heap_free(state->colorBuf);
             }
-            state->bufSize = arg2 * 4;
-            state->buf = heap_malloc(state->bufSize);
+            state->colorBufCount = imgfxArg1 * 4;
+            state->colorBuf = heap_malloc(state->colorBufCount);
             return;
-        case FOLD_TYPE_F:
-        case FOLD_TYPE_10:
-            if (type == state->savedType2 && arg2 == state->unk_1C[1][0] && arg3 == state->unk_1C[1][1]) {
+        case IMGFX_OVERLAY:
+        case IMGFX_OVERLAY_XLU:
+            if (type == state->lastColorCmd
+                && imgfxArg1 == (s32) state->ints.overlay.pattern
+                && imgfxArg2 == state->ints.overlay.alpha
+            ) {
+                // no paramaters have changed
                 return;
             }
             break;
-        case FOLD_TYPE_5:
-            if (state->savedType1 == type && state->unk_1C[0][0] == arg2 && state->unk_1C[0][1] == arg3 &&
-                state->unk_1C[0][2] == arg4)
-            {
+        case IMGFX_SET_ANIM:
+            if (state->lastAnimCmd == type
+                && state->ints.anim.type == imgfxArg1
+                && state->ints.anim.interval == imgfxArg2
+                && state->ints.anim.step == imgfxArg3
+            ) {
+                // no paramaters have changed
                 return;
             }
             break;
         default:
-            if (type != FOLD_TYPE_D && state->savedType2 == FOLD_TYPE_D) {
-                state->meshType = FOLD_MESH_TYPE_0;
+            if (type != IMGFX_HOLOGRAM && state->lastColorCmd == IMGFX_HOLOGRAM) {
+                state->meshType = IMGFX_MESH_DEFAULT;
                 state->subdivX = 1;
                 state->subdivY = 1;
             }
             break;
     }
 
-    if (type != FOLD_TYPE_5 && state->savedType1 == FOLD_TYPE_5) {
-        state->savedType1 = FOLD_TYPE_NONE;
+    if (type != IMGFX_SET_ANIM && state->lastAnimCmd == IMGFX_SET_ANIM) {
+        state->lastAnimCmd = IMGFX_CLEAR;
     }
 
-    if (type == FOLD_TYPE_4 || type == FOLD_TYPE_5) {
-        state->savedType1 = type;
-        state->unk_1C[0][0] = arg2;
-        state->unk_1C[0][1] = arg3;
-        state->unk_1C[0][2] = arg4;
-        state->unk_1C[0][3] = arg5;
-    } else if (type >= FOLD_TYPE_6 && type <= FOLD_TYPE_10) {
-        state->savedType2 = type;
-        state->unk_1C[1][0] = arg2;
-        state->unk_1C[1][1] = arg3;
-        state->unk_1C[1][2] = arg4;
-        state->unk_1C[1][3] = arg5;
+    if (type == IMGFX_SET_WAVY || type == IMGFX_SET_ANIM) {
+        state->lastAnimCmd = type;
+        state->ints.args.anim[0] = imgfxArg1;
+        state->ints.args.anim[1] = imgfxArg2;
+        state->ints.args.anim[2] = imgfxArg3;
+        state->ints.args.anim[3] = imgfxArg4;
+    } else if (type >= IMGFX_SET_COLOR && type <= IMGFX_OVERLAY_XLU) {
+        state->lastColorCmd = type;
+        state->ints.args.color[0] = imgfxArg1;
+        state->ints.args.color[1] = imgfxArg2;
+        state->ints.args.color[2] = imgfxArg3;
+        state->ints.args.color[3] = imgfxArg4;
     }
 
-    state->flags &= FOLD_STATE_FLAG_ENABLED;
+    state->flags &= IMGFX_FLAG_IN_USE;
     if (flags != 0) {
         state->flags |= flags;
     }
-    state->meshType = FOLD_MESH_TYPE_0;
+    state->meshType = IMGFX_MESH_DEFAULT;
 
     switch (type) {
-        case FOLD_TYPE_3:
-            state->meshType = FOLD_MESH_TYPE_0;
-            state->renderType = FOLD_RENDER_TYPE_0;
+        case IMGFX_RESET:
+            state->meshType = IMGFX_MESH_DEFAULT;
+            state->renderType = IMGFX_RENDER_DEFAULT;
             break;
-        case FOLD_TYPE_4:
+        case IMGFX_SET_WAVY:
             state->subdivX = 4;
             state->subdivY = 4;
-            state->meshType = FOLD_MESH_TYPE_1;
-            func_8013EE48(state);
+            state->meshType = IMGFX_MESH_GRID_WAVY;
+            imgfx_wavy_init(state);
             break;
-        case FOLD_TYPE_5:
-            state->meshType = FOLD_MESH_TYPE_2;
-            state->renderType = FOLD_RENDER_TYPE_B;
-            state->unk_3C[0][0] = 0.0f;
-            state->unk_3C[0][1] = 0.0f;
-            state->flags |= FOLD_STATE_FLAG_200;
+        case IMGFX_SET_ANIM:
+            state->meshType = IMGFX_MESH_ANIMATED;
+            state->renderType = IMGFX_RENDER_ANIM;
+            state->floats.anim.curFrame = 0.0f;
+            state->floats.anim.curIdx = 0.0f;
+            state->flags |= IMGFX_FLAG_200;
             break;
-        case FOLD_TYPE_6:
-        case FOLD_TYPE_7:
-        case FOLD_TYPE_8:
-            if (arg2 >= 0xFF && arg3 >= 0xFF && arg4 >= 0xFF && arg5 >= 0xFF) {
-                state->renderType = FOLD_RENDER_TYPE_0;
-            } else if (arg5 >= 0xFF) {
-                state->renderType = FOLD_RENDER_TYPE_1;
-            } else if (arg2 >= 0xFF && arg3 >= 0xFF && arg4 >= 0xFF) {
-                state->renderType = FOLD_RENDER_TYPE_2;
+        case IMGFX_SET_COLOR:
+        case IMGFX_SET_ALPHA:
+        case IMGFX_SET_TINT:
+            if (imgfxArg1 >= 255 && imgfxArg2 >= 255 && imgfxArg3 >= 255 && imgfxArg4 >= 255) {
+                // no color + no transparency
+                state->renderType = IMGFX_RENDER_DEFAULT;
+            } else if (imgfxArg4 >= 255) {
+                // some color + no transparency
+                state->renderType = IMGFX_RENDER_MULTIPLY_RGB;
+            } else if (imgfxArg1 >= 255 && imgfxArg2 >= 255 && imgfxArg3 >= 255) {
+                // no color + transparency
+                state->renderType = IMGFX_RENDER_MULTIPLY_ALPHA;
             } else {
-                state->renderType = FOLD_RENDER_TYPE_3;
+                // some color + transparency
+                state->renderType = IMGFX_RENDER_MULTIPLY_RGBA;
             }
             break;
-        case FOLD_TYPE_9:
-        case FOLD_TYPE_A:
-            if (arg5 == 255.0) {
-                state->renderType = FOLD_RENDER_TYPE_4;
+        case IMGFX_SET_WHITE_FADE:
+        case IMGFX_SET_CREDITS_FADE:
+            if (imgfxArg4 == 255.0) {
+                state->renderType = IMGFX_RENDER_MODULATE_PRIM_RGB;
             } else {
-                state->renderType = FOLD_RENDER_TYPE_5;
+                state->renderType = IMGFX_RENDER_MODULATE_PRIM_RGBA;
             }
             break;
-        case FOLD_TYPE_B:
-            if (arg2 < state->bufSize) {
-                t1 = (u32) arg3 >> 0x18; // required to match
-                state->buf[arg2 * 4 + 0] = (u32) arg3 >> 0x18;
-                state->buf[arg2 * 4 + 1] = (u32) arg3 >> 0x10;
-                state->buf[arg2 * 4 + 2] = (u32) arg3 >> 0x08;
-                do {
-                    state->buf[arg2 * 4 + 3] = arg3;
-                } while (0); // required to match
+        case IMGFX_COLOR_BUF_SET_MULTIPLY:
+            if (imgfxArg1 < state->colorBufCount) {
+                // unpack and store color
+                r = (imgfxArg2 & 0xFF000000) >> 24;
+                g = (imgfxArg2 & 0xFF0000) >> 16;
+                b = (imgfxArg2 & 0xFF00) >> 8;
+                a = (imgfxArg2 & 0xFF);
+                state->colorBuf[imgfxArg1].r = r;
+                state->colorBuf[imgfxArg1].g = g;
+                state->colorBuf[imgfxArg1].b = b;
+                state->colorBuf[imgfxArg1].a = a;
 
-                state->meshType = FOLD_MESH_TYPE_0;
+                state->meshType = IMGFX_MESH_DEFAULT;
 
-                if ((arg3 & 0xFF) == 0xFF) {
-                    state->renderType = FOLD_RENDER_TYPE_6;
+                if (a == 255) {
+                    state->renderType = IMGFX_RENDER_MULTIPLY_SHADE_RGB;
                 } else {
-                    state->renderType = FOLD_RENDER_TYPE_8;
+                    state->renderType = IMGFX_RENDER_MULTIPLY_SHADE_RGBA;
                 }
             }
             break;
-        case FOLD_TYPE_C:
-            if (arg2 < state->bufSize) {
-                t1 = (u32) arg3 >> 0x18; // required to match
-                state->buf[arg2 * 4 + 0] = t1;
-                state->buf[arg2 * 4 + 1] = (u32) arg3 >> 0x10;
-                state->buf[arg2 * 4 + 2] = (u32) arg3 >> 0x08;
-                do {
-                    state->buf[arg2 * 4 + 3] = arg3;
-                } while (0); // required to match
+        case IMGFX_COLOR_BUF_SET_MODULATE:
+            if (imgfxArg1 < state->colorBufCount) {
+                // unpack and store color
+                r = (imgfxArg2 & 0xFF000000) >> 24;
+                g = (imgfxArg2 & 0xFF0000) >> 16;
+                b = (imgfxArg2 & 0xFF00) >> 8;
+                a = (imgfxArg2 & 0xFF);
+                state->colorBuf[imgfxArg1].r = r;
+                state->colorBuf[imgfxArg1].g = g;
+                state->colorBuf[imgfxArg1].b = b;
+                state->colorBuf[imgfxArg1].a = a;
 
-                state->meshType = FOLD_MESH_TYPE_0;
+                state->meshType = IMGFX_MESH_DEFAULT;
 
-                if ((arg3 & 0xFF) == 0xFF) {
-                    state->renderType = FOLD_RENDER_TYPE_9;
+                if (a == 255) {
+                    state->renderType = IMGFX_RENDER_MODULATE_SHADE_RGB;
                 } else {
-                    state->renderType = FOLD_RENDER_TYPE_A;
+                    state->renderType = IMGFX_RENDER_MODULATE_SHADE_RGBA;
                 }
             }
             break;
-        case FOLD_TYPE_D:
-            state->renderType = FOLD_RENDER_TYPE_C;
+        case IMGFX_HOLOGRAM:
+            state->renderType = IMGFX_RENDER_HOLOGRAM;
             break;
-        case FOLD_TYPE_E:
-            state->renderType = FOLD_RENDER_TYPE_D;
+        case IMGFX_FILL_COLOR:
+            state->renderType = IMGFX_RENDER_COLOR_FILL;
             break;
-        case FOLD_TYPE_F:
-        case FOLD_TYPE_10:
-            state->meshType = FOLD_MESH_TYPE_4;
-            if (arg3 >= 0xFF) {
-                state->renderType = FOLD_RENDER_TYPE_E;
+        case IMGFX_OVERLAY:
+        case IMGFX_OVERLAY_XLU:
+            state->meshType = IMGFX_MESH_STRIP;
+            if (imgfxArg2 >= 255) {
+                state->renderType = IMGFX_RENDER_OVERLAY_RGB;
             } else {
-                state->renderType = FOLD_RENDER_TYPE_F;
+                state->renderType = IMGFX_RENDER_OVERLAY_RGBA;
             }
-            state->unk_3C[1][0] = 0.0f;
-            state->unk_3C[1][1] = 0.0f;
+            state->floats.overlay.posX = 0.0f;
+            state->floats.overlay.posY = 0.0f;
             break;
     }
 }
 
-void fold_set_state_flags(s32 idx, u16 flagBits, s32 mode) {
-    if ((*D_80156954)[idx].flags & FOLD_STATE_FLAG_ENABLED) {
+void imgfx_set_state_flags(s32 idx, u16 flagBits, s32 mode) {
+    if ((*ImgFXInstances)[idx].flags & IMGFX_FLAG_IN_USE) {
         if (mode) {
-            (*D_80156954)[idx].flags |= flagBits;
+            (*ImgFXInstances)[idx].flags |= flagBits;
         } else {
-            (*D_80156954)[idx].flags &= ~flagBits;
+            (*ImgFXInstances)[idx].flags &= ~flagBits;
         }
     }
 }
 
-s32 fold_appendGfx_component(s32 idx, FoldImageRecPart* image, u32 flagBits, Matrix4f mtx) {
-    FoldState* state = &(*D_80156954)[idx];
+s32 imgfx_appendGfx_component(s32 idx, ImgFXTexture* ifxImg, u32 flagBits, Matrix4f mtx) {
+    ImgFXState* state = &(*ImgFXInstances)[idx];
     s32 ret = 0;
 
-    if (image->opacity == 0) {
+    if (ifxImg->alpha == 0) {
         return 0;
     }
 
     state->arrayIdx = idx;
     state->flags |= flagBits;
-    fold_currentImage->raster = image->raster;
-    fold_currentImage->palette = image->palette;
-    fold_currentImage->width = image->width;
-    fold_currentImage->height = image->height;
-    fold_currentImage->xOffset = image->xOffset;
-    fold_currentImage->yOffset =  image->yOffset;
-    fold_currentImage->unk_18 = 0;
-    fold_currentImage->unk_1E = 0;
-    fold_currentImage->alphaMultiplier = image->opacity;
+    ImgFXCurrentTexturePtr->tex.raster  = ifxImg->raster;
+    ImgFXCurrentTexturePtr->tex.palette = ifxImg->palette;
+    ImgFXCurrentTexturePtr->tex.width   = ifxImg->width;
+    ImgFXCurrentTexturePtr->tex.height  = ifxImg->height;
+    ImgFXCurrentTexturePtr->tex.xOffset = ifxImg->xOffset;
+    ImgFXCurrentTexturePtr->tex.yOffset = ifxImg->yOffset;
+    ImgFXCurrentTexturePtr->unk_18  = 0;
+    ImgFXCurrentTexturePtr->unk_1E  = 0;
+    ImgFXCurrentTexturePtr->alphaMultiplier = ifxImg->alpha;
 
-    if ((u32)idx >= 90) {
+    if (idx < 0 || idx >= MAX_IMGFX_INSTANCES) {
         return 0;
     }
 
-    if (idx >= 90 || state == NULL) {
+    if (idx >= MAX_IMGFX_INSTANCES || state == NULL) {
         return 0;
     }
 
-    func_8013B0EC(state);
-    func_8013B1B0(state, mtx);
+    imgfx_make_mesh(state);
+    imgfx_appendGfx_mesh(state, mtx);
 
-    if (state->flags & FOLD_STATE_FLAG_1000) {
-        state->unk_1C[0][0] = -1;
-        state->unk_1C[1][0] = -1;
-        state->savedType1 = FOLD_TYPE_NONE;
+    if (state->flags & IMGFX_FLAG_ANIM_DONE) {
+        state->ints.raw[0][0] = -1;
+        state->ints.raw[1][0] = -1;
+        state->lastAnimCmd = IMGFX_CLEAR;
         state->meshType = 0;
-        state->renderType = FOLD_RENDER_TYPE_0;
-        state->flags &= ~(FOLD_STATE_FLAG_1000 | FOLD_STATE_FLAG_800 | FOLD_STATE_FLAG_100 | FOLD_STATE_FLAG_80);
-        fold_clear_state_gfx(state);
+        state->renderType = IMGFX_RENDER_DEFAULT;
+        state->flags &= ~(IMGFX_FLAG_ANIM_DONE | IMGFX_FLAG_800 | IMGFX_FLAG_REVERSE_ANIM | IMGFX_FLAG_LOOP_ANIM);
+        imgfx_cache_instance_data(state);
         ret = 1;
-    } else if (state->flags & FOLD_STATE_FLAG_4000) {
+    } else if (state->flags & IMGFX_FLAG_4000) {
         ret = 2;
-    } else if (state->flags & FOLD_STATE_FLAG_20000) {
-        state->savedType1 = FOLD_TYPE_NONE;
-        state->savedType2 = FOLD_TYPE_NONE;
-        state->meshType = FOLD_MESH_TYPE_0;
-        state->renderType = FOLD_RENDER_TYPE_0;
-        state->unk_1C[0][0] = -1;
-        state->unk_1C[1][0] = -1;
-        state->flags &= FOLD_STATE_FLAG_ENABLED;
+    } else if (state->flags & IMGFX_FLAG_20000) {
+        state->lastAnimCmd = IMGFX_CLEAR;
+        state->lastColorCmd = IMGFX_CLEAR;
+        state->meshType = IMGFX_MESH_DEFAULT;
+        state->renderType = IMGFX_RENDER_DEFAULT;
+        state->ints.raw[0][0] = -1;
+        state->ints.raw[1][0] = -1;
+        state->flags &= IMGFX_FLAG_IN_USE;
         ret = 1;
     }
     return ret;
 }
 
-void func_8013B0EC(FoldState* state) {
+void imgfx_make_mesh(ImgFXState* state) {
     switch (state->meshType) {
-        case FOLD_MESH_TYPE_3:
-            if (state->unk_1C[1][2] == 0) {
+        case IMGFX_MESH_GRID_UNUSED:
+            if (state->ints.raw[1][2] == 0) {
                 state->subdivX = 1;
                 state->subdivY = 16;
             } else {
                 state->subdivX = 1;
                 state->subdivY = 1;
             }
-        case FOLD_MESH_TYPE_1:
-            func_8013C048(state);
+            // fallthrough
+        case IMGFX_MESH_GRID_WAVY:
+            imgfx_mesh_make_grid(state);
             break;
-        case FOLD_MESH_TYPE_2:
-            func_8013C3F0(state);
+        case IMGFX_MESH_ANIMATED:
+            imgfx_mesh_anim_update(state);
             break;
-        case FOLD_MESH_TYPE_0:
-        case FOLD_MESH_TYPE_4:
-            func_8013BC88(state);
+        case IMGFX_MESH_DEFAULT:
+        case IMGFX_MESH_STRIP:
+            imgfx_mesh_make_strip(state);
             break;
         default:
             return;
     }
 
-    if (state->savedType1 == FOLD_TYPE_4) {
-        func_8013EE68(state);
+    if (state->lastAnimCmd == IMGFX_SET_WAVY) {
+        imgfx_mesh_make_wavy(state);
     }
 
-    switch (state->savedType2) {
-        case FOLD_TYPE_B:
-        case FOLD_TYPE_C:
-            func_8013F1F8(state);
+    switch (state->lastColorCmd) {
+        case IMGFX_COLOR_BUF_SET_MULTIPLY:
+        case IMGFX_COLOR_BUF_SET_MODULATE:
+            imgfx_mesh_load_colors(state);
             break;
     }
 }
 
-void func_8013B1B0(FoldState* state, Matrix4f mtx) {
-    s16 cond = FALSE;
-    s32 primColor = state->unk_1C[1][3];
+void imgfx_appendGfx_mesh(ImgFXState* state, Matrix4f mtx) {
+    s16 skipModeChange = FALSE;
+    s32 primAlpha = state->ints.color.a;
     s32 renderType = state->renderType;
     s8 angle1;
     s8 angle2;
-    f32 alphaComp;
-    s32 blendColor;
-    FoldRenderMode* fold;
+    f32 ifxImgAlpha;
+    ImgFXRenderMode* renderMode;
     s32 mode1;
     s32 mode2;
-    s32 t1;
-    s32 t2;
+    s32 dirX1;
+    s32 dirZ2;
 
     gDPPipeSync(gMainGfxPos++);
 
-    if (!(state->flags & FOLD_STATE_FLAG_10)) {
-        gSPDisplayList(gMainGfxPos++, DefaultFoldSetupGfx);
-        if (state->flags & FOLD_STATE_FLAG_NO_FILTERING) {
+    if (!(state->flags & IMGFX_FLAG_SKIP_GFX_SETUP)) {
+        gSPDisplayList(gMainGfxPos++, DefaultImgFXSetupGfx);
+        if (state->flags & IMGFX_FLAG_NO_FILTERING) {
             gDPSetTextureFilter(gMainGfxPos++, G_TF_POINT);
         }
-        if (state->flags & FOLD_STATE_FLAG_G_CULL_BACK) {
+        if (state->flags & IMGFX_FLAG_G_CULL_BACK) {
             gSPSetGeometryMode(gMainGfxPos++, G_CULL_BACK);
         }
-        if (state->flags & FOLD_STATE_FLAG_G_CULL_FRONT) {
+        if (state->flags & IMGFX_FLAG_G_CULL_FRONT) {
             gSPSetGeometryMode(gMainGfxPos++, G_CULL_FRONT);
         }
 
-        fold = &D_8014EE98[state->renderType];
+        renderMode = &ImgFXRenderModes[state->renderType];
 
-        mode1 = fold->mode1;
-        mode2 = fold->mode2;
-        if (fold->flags & FOLD_STATE_FLAG_ENABLED) {
-            cond = TRUE;
+        mode1 = renderMode->mode1;
+        mode2 = renderMode->mode2;
+        if (renderMode->flags & IMGFX_RENDER_NO_OVERRIDE) {
+            skipModeChange = TRUE;
         }
 
-        alphaComp = (f32) fold_currentImage->alphaMultiplier / 255.0;
+        ifxImgAlpha = (f32) ImgFXCurrentTexturePtr->alphaMultiplier / 255.0;
 
-        if (!cond && (fold_currentImage->alphaMultiplier < 0xFF)) {
-            state->unk_1C[1][3] = 0xFF;
+        // some modes dont support alpha < 255 and must be replaced
+        if (!skipModeChange && (ImgFXCurrentTexturePtr->alphaMultiplier < 255)) {
+            state->ints.color.a = 255;
             switch (state->renderType) {
-                case FOLD_RENDER_TYPE_0:
-                case FOLD_RENDER_TYPE_B:
-                    renderType = FOLD_RENDER_TYPE_2;
+                case IMGFX_RENDER_DEFAULT:
+                case IMGFX_RENDER_ANIM:
+                    renderType = IMGFX_RENDER_MULTIPLY_ALPHA;
                     break;
-                case FOLD_RENDER_TYPE_1:
-                case FOLD_RENDER_TYPE_4:
-                    renderType = FOLD_RENDER_TYPE_3;
+                case IMGFX_RENDER_MULTIPLY_RGB:
+                case IMGFX_RENDER_MODULATE_PRIM_RGB:
+                    renderType = IMGFX_RENDER_MULTIPLY_RGBA;
                     break;
-                case FOLD_RENDER_TYPE_9:
-                    renderType = FOLD_RENDER_TYPE_A;
+                case IMGFX_RENDER_MODULATE_SHADE_RGB:
+                    renderType = IMGFX_RENDER_MODULATE_SHADE_RGBA;
                     break;
             }
-            primColor = state->unk_1C[1][3] * alphaComp;
+            primAlpha = state->ints.color.a * ifxImgAlpha;
+            //TODO figure out bits
             mode1 = 0x404B40;
             mode2 = 0x104B40;
-            cond = TRUE;
+            skipModeChange = TRUE;
         }
 
-        if ((state->flags & FOLD_STATE_FLAG_400) && !cond) {
-            mode1 &= ~0x200;
-            mode2 &= ~0x200;
-            mode1 |= 0x2040;
-            mode2 |= 0x2040;
+        if ((state->flags & IMGFX_FLAG_400) && !skipModeChange) {
+            mode1 &= ~CVG_DST_FULL;
+            mode2 &= ~CVG_DST_FULL;
+            mode1 |= (ALPHA_CVG_SEL | IM_RD);
+            mode2 |= (ALPHA_CVG_SEL | IM_RD);
         }
 
-        if (state->flags & FOLD_STATE_FLAG_40) {
+        if (state->flags & IMGFX_FLAG_40) {
             gSPClearGeometryMode(gMainGfxPos++, G_ZBUFFER);
         } else {
             gSPSetGeometryMode(gMainGfxPos++, G_ZBUFFER);
-            if (cond) {
-                mode1 |= 0x10;
-                mode2 |= 0x10;
+            if (skipModeChange) {
+                mode1 |= Z_CMP;
+                mode2 |= Z_CMP;
             } else {
-                mode1 |= 0x30;
-                mode2 |= 0x30;
+                mode1 |= (Z_CMP | Z_UPD);
+                mode2 |= (Z_CMP | Z_UPD);
             }
         }
-        state->unk_78 = mode2;
+        state->otherModeL = mode2;
         gDPSetRenderMode(gMainGfxPos++, mode1, mode2);
 
         switch (renderType) {
-            case FOLD_RENDER_TYPE_1:
+            case IMGFX_RENDER_MULTIPLY_RGB:
+                // color: texture * prim
+                // alpha: texture
                 gDPSetCombineMode(gMainGfxPos++, G_CC_MODULATEIDECALA_PRIM, G_CC_MODULATEIDECALA_PRIM);
-                gDPSetPrimColor(gMainGfxPos++, 0, 0, state->unk_1C[1][0], state->unk_1C[1][1], state->unk_1C[1][2], 0);
+                gDPSetPrimColor(gMainGfxPos++, 0, 0, state->ints.color.r, state->ints.color.g,
+                                state->ints.color.b, 0);
                 break;
-            case FOLD_RENDER_TYPE_2:
-                if (primColor <= 0) {
+            case IMGFX_RENDER_MULTIPLY_ALPHA:
+                // color: texture
+                // alpha: texture * prim
+                if (primAlpha <= 0) {
                     return;
                 }
-                gDPSetCombineLERP(gMainGfxPos++, 0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0, 0, 0, 0, TEXEL0,
-                                  TEXEL0, 0, PRIMITIVE, 0);
-                gDPSetPrimColor(gMainGfxPos++, 0, 0, 0, 0, 0, primColor);
+                gDPSetCombineLERP(gMainGfxPos++,
+                    0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0,
+                    0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0);
+                gDPSetPrimColor(gMainGfxPos++, 0, 0, 0, 0, 0, primAlpha);
                 break;
-            case FOLD_RENDER_TYPE_3:
-                if (primColor <= 0) {
+            case IMGFX_RENDER_MULTIPLY_RGBA:
+                // color: texture * prim
+                // alpha: texture * prim
+                if (primAlpha <= 0) {
                     return;
                 }
                 gDPSetCombineMode(gMainGfxPos++, G_CC_MODULATEIA_PRIM, G_CC_MODULATEIA_PRIM);
-                gDPSetPrimColor(gMainGfxPos++, 0, 0, state->unk_1C[1][0], state->unk_1C[1][1],
-                                state->unk_1C[1][2], primColor);
+                gDPSetPrimColor(gMainGfxPos++, 0, 0, state->ints.color.r, state->ints.color.g,
+                                state->ints.color.b, primAlpha);
                 break;
-            case FOLD_RENDER_TYPE_4:
-                gDPSetCombineLERP(gMainGfxPos++, 1, PRIMITIVE, TEXEL0, PRIMITIVE, 0, 0, 0, TEXEL0, 1, PRIMITIVE,
-                                  TEXEL0, PRIMITIVE, 0, 0, 0, TEXEL0);
-                gDPSetPrimColor(gMainGfxPos++, 0, 0, state->unk_1C[1][0], state->unk_1C[1][1], state->unk_1C[1][2], 0);
+            case IMGFX_RENDER_MODULATE_PRIM_RGB:
+                // color: lerp from prim color to 1 based on texture intensity
+                // alpha: texture
+                gDPSetCombineLERP(gMainGfxPos++,
+                    1, PRIMITIVE, TEXEL0, PRIMITIVE, 0, 0, 0, TEXEL0,
+                    1, PRIMITIVE, TEXEL0, PRIMITIVE, 0, 0, 0, TEXEL0);
+                gDPSetPrimColor(gMainGfxPos++, 0, 0, state->ints.color.r, state->ints.color.g,
+                                state->ints.color.b, 0);
                 break;
-            case FOLD_RENDER_TYPE_5:
-                if (primColor <= 0) {
+            case IMGFX_RENDER_MODULATE_PRIM_RGBA:
+                // color: lerp from prim color to 1 based on texture intensity
+                // alpha: texture * vtx
+                if (primAlpha <= 0) {
                     return;
                 }
-                gDPSetCombineLERP(gMainGfxPos++, 1, 0, TEXEL0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0, 1, 0, TEXEL0,
-                                  PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
-                gDPSetPrimColor(gMainGfxPos++, 0, 0, state->unk_1C[1][0], state->unk_1C[1][1],
-                                state->unk_1C[1][2], primColor);
+                gDPSetCombineLERP(gMainGfxPos++,
+                    1, 0, TEXEL0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
+                    1, 0, TEXEL0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+                gDPSetPrimColor(gMainGfxPos++, 0, 0, state->ints.color.r, state->ints.color.g,
+                                state->ints.color.b, primAlpha);
                 break;
-            case FOLD_RENDER_TYPE_6:
+            case IMGFX_RENDER_MULTIPLY_SHADE_RGB:
+                // color: modulate vtx color by texture intensity
+                // alpha: texture
                 gDPSetCombineMode(gMainGfxPos++, G_CC_MODULATEIDECALA, G_CC_MODULATEIDECALA);
                 gSPSetGeometryMode(gMainGfxPos++, G_SHADE | G_SHADING_SMOOTH);
                 gSPClearGeometryMode(gMainGfxPos++, G_LIGHTING);
                 break;
-            case FOLD_RENDER_TYPE_9:
-                gDPSetCombineLERP(gMainGfxPos++, 1, SHADE, TEXEL0, SHADE, 0, 0, 0, TEXEL0, 1, SHADE, TEXEL0, SHADE,
-                                  0, 0, 0, TEXEL0);
+            case IMGFX_RENDER_MODULATE_SHADE_RGB:
+                // color: lerp from vtx color to 1 based on texture intensity
+                // alpha: texture
+                gDPSetCombineLERP(gMainGfxPos++,
+                    1, SHADE, TEXEL0, SHADE, 0, 0, 0, TEXEL0,
+                    1, SHADE, TEXEL0, SHADE, 0, 0, 0, TEXEL0);
                 gSPSetGeometryMode(gMainGfxPos++, G_SHADE | G_SHADING_SMOOTH);
                 gSPClearGeometryMode(gMainGfxPos++, G_LIGHTING);
                 break;
-            case FOLD_RENDER_TYPE_7:
-                gDPSetCombineLERP(gMainGfxPos++, 0, 0, 0, TEXEL0, TEXEL0, 0, SHADE, 0, 0, 0, 0, TEXEL0, TEXEL0, 0,
-                                  SHADE, 0);
+            case IMGFX_RENDER_MULTIPLY_SHADE_ALPHA:
+                // color: texture
+                // alpha: texture * vtx color
+                gDPSetCombineLERP(gMainGfxPos++,
+                    0, 0, 0, TEXEL0, TEXEL0, 0, SHADE, 0,
+                    0, 0, 0, TEXEL0, TEXEL0, 0, SHADE, 0);
                 gSPSetGeometryMode(gMainGfxPos++, G_SHADE | G_SHADING_SMOOTH);
                 gSPClearGeometryMode(gMainGfxPos++, G_LIGHTING);
                 break;
-            case FOLD_RENDER_TYPE_8:
+            case IMGFX_RENDER_MULTIPLY_SHADE_RGBA:
+                // color: modulate vtx color by texture intensity
+                // alpha: modulate vtx alpha by texture intensity
                 gDPSetCombineMode(gMainGfxPos++, G_CC_MODULATEIA, G_CC_MODULATEIA);
                 gSPSetGeometryMode(gMainGfxPos++, G_SHADE | G_SHADING_SMOOTH);
                 gSPClearGeometryMode(gMainGfxPos++, G_LIGHTING);
                 break;
-            case FOLD_RENDER_TYPE_A:
-                gDPSetCombineLERP(gMainGfxPos++, 1, SHADE, TEXEL0, SHADE, TEXEL0, 0, SHADE, 0, 1, SHADE, TEXEL0,
-                                  SHADE, TEXEL0, 0, SHADE, 0);
+            case IMGFX_RENDER_MODULATE_SHADE_RGBA:
+                // color: lerp from vtx color to 1 based on texture intensity
+                // alpha: vtx color * texture
+                gDPSetCombineLERP(gMainGfxPos++,
+                    1, SHADE, TEXEL0, SHADE, TEXEL0, 0, SHADE, 0,
+                    1, SHADE, TEXEL0, SHADE, TEXEL0, 0, SHADE, 0);
                 gSPSetGeometryMode(gMainGfxPos++, G_SHADE | G_SHADING_SMOOTH);
                 gSPClearGeometryMode(gMainGfxPos++, G_LIGHTING);
                 break;
-            case FOLD_RENDER_TYPE_B:
-                if (state->flags & (FOLD_STATE_FLAG_2000 | FOLD_STATE_FLAG_8000)) {
+            case IMGFX_RENDER_ANIM:
+                if (state->flags & (IMGFX_FLAG_2000 | IMGFX_FLAG_8000)) {
                     Camera* currentCam = &gCameras[gCurrentCameraID];
 
                     gDPSetCombineMode(gMainGfxPos++, G_CC_MODULATEIDECALA, G_CC_MODULATEIDECALA);
@@ -863,162 +982,192 @@ void func_8013B1B0(FoldState* state, Matrix4f mtx) {
 
                     angle1 = cosine(currentCam->currentYaw) * 120.0f;
                     angle2 = cosine(currentCam->currentYaw + 90.0f) * 120.0f;
-                    t1 = -angle1;
-                    t2 = -angle2;
-                    D_8014EE18.l[0].l.dir[0] = t1;
-                    D_8014EE18.l[1].l.dir[0] = angle1;
-                    D_8014EE18.l[0].l.dir[2] = angle2;
-                    D_8014EE18.l[1].l.dir[2] = t2;
-                    gSPSetLights2(gMainGfxPos++, D_8014EE18);
+                    dirX1 = -angle1;
+                    dirZ2 = -angle2;
+                    ImgFXLights.l[0].l.dir[0] = dirX1;
+                    ImgFXLights.l[1].l.dir[0] = angle1;
+                    ImgFXLights.l[0].l.dir[2] = angle2;
+                    ImgFXLights.l[1].l.dir[2] = dirZ2;
+                    gSPSetLights2(gMainGfxPos++, ImgFXLights);
                     break;
                 }
                 gDPSetCombineMode(gMainGfxPos++, G_CC_DECALRGBA, G_CC_DECALRGBA);
                 break;
-            case FOLD_RENDER_TYPE_C:
-                if (state->unk_1C[1][0] == 0) {
-                    primColor = state->unk_1C[1][3] * alphaComp;
-                    gDPSetCombineLERP(gMainGfxPos++, NOISE, PRIMITIVE, PRIMITIVE, TEXEL0, TEXEL0, 0, PRIMITIVE, 0,
-                                      NOISE, PRIMITIVE, PRIMITIVE, TEXEL0, TEXEL0, 0, PRIMITIVE, 0);
-                    gDPSetPrimColor(gMainGfxPos++, 0, 0, state->unk_1C[1][1], state->unk_1C[1][1],
-                                    state->unk_1C[1][1],primColor);
-                } else if (state->unk_1C[1][0] == 1) {
-                    primColor = state->unk_1C[1][3] * alphaComp;
-                    gDPSetCombineLERP(gMainGfxPos++, 0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0, 0, 0, 0, TEXEL0,
-                                      TEXEL0, 0, PRIMITIVE, 0);
-                    gDPSetPrimColor(gMainGfxPos++, 0, 0, 0, 0, 0, primColor);
+            case IMGFX_RENDER_HOLOGRAM:
+                if (state->ints.hologram.mode == IMGFX_HOLOGRAM_NOISE) {
+                    primAlpha = state->ints.hologram.alphaAmt * ifxImgAlpha;
+                    // color: blend texure and noise
+                    // alpha: texure * prim
+                    gDPSetCombineLERP(gMainGfxPos++,
+                        NOISE, PRIMITIVE, PRIMITIVE, TEXEL0, TEXEL0, 0, PRIMITIVE, 0,
+                        NOISE, PRIMITIVE, PRIMITIVE, TEXEL0, TEXEL0, 0, PRIMITIVE, 0);
+                    gDPSetPrimColor(gMainGfxPos++, 0, 0,
+                                    state->ints.hologram.noiseAmt,
+                                    state->ints.hologram.noiseAmt,
+                                    state->ints.hologram.noiseAmt,
+                                    primAlpha);
+                } else if (state->ints.hologram.mode == IMGFX_HOLOGRAM_DITHER) {
+                    primAlpha = state->ints.hologram.alphaAmt * ifxImgAlpha;
+                    // color: texture
+                    // alpha: texture * prim
+                    gDPSetCombineLERP(gMainGfxPos++,
+                        0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0,
+                        0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0);
+                    gDPSetPrimColor(gMainGfxPos++, 0, 0, 0, 0, 0, primAlpha);
                     gDPSetAlphaCompare(gMainGfxPos++, G_AC_DITHER);
-                } else if (state->unk_1C[1][0] == 2) {
-                    blendColor = state->unk_1C[1][3] + state->unk_1C[1][1];
-                    if (blendColor > 255) {
-                        blendColor = 255;
+                } else if (state->ints.hologram.mode == IMGFX_HOLOGRAM_THRESHOLD) {
+                    s32 blendAlpha = state->ints.hologram.alphaAmt + state->ints.hologram.noiseAmt;
+                    if (blendAlpha > 255) {
+                        blendAlpha = 255;
                     }
-
-                    primColor = state->unk_1C[1][3] * alphaComp;
-                    gDPSetCombineLERP(gMainGfxPos++, 0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0, 0, 0, 0, TEXEL0,
-                                      TEXEL0, 0, PRIMITIVE, 0);
+                    primAlpha = state->ints.hologram.alphaAmt * ifxImgAlpha;
+                    // color: texture
+                    // alpha: texture * prim
+                    gDPSetCombineLERP(gMainGfxPos++,
+                        0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0,
+                        0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0);
                     gDPSetAlphaDither(gMainGfxPos++, G_AD_NOISE);
                     gDPSetAlphaCompare(gMainGfxPos++, G_AC_THRESHOLD);
-                    gDPSetPrimColor(gMainGfxPos++, 0, 0, 0, 0, 0, primColor);
-                    gDPSetBlendColor(gMainGfxPos++, 0, 0, 0, blendColor);
+                    gDPSetPrimColor(gMainGfxPos++, 0, 0, 0, 0, 0, primAlpha);
+                    gDPSetBlendColor(gMainGfxPos++, 0, 0, 0, blendAlpha);
                 }
                 break;
-            case FOLD_RENDER_TYPE_D:
-                gDPSetCombineLERP(gMainGfxPos++, 0, 0, 0, PRIMITIVE, 0, 0, 0, TEXEL0, 0, 0, 0, PRIMITIVE, 0, 0, 0,
-                                  TEXEL0);
-                gDPSetPrimColor(gMainGfxPos++, 0, 0, state->unk_1C[1][0], state->unk_1C[1][1], state->unk_1C[1][2], 0);
+            case IMGFX_RENDER_COLOR_FILL:
+                // color: prim
+                // alpha: texture
+                gDPSetCombineLERP(gMainGfxPos++,
+                    0, 0, 0, PRIMITIVE, 0, 0, 0, TEXEL0,
+                    0, 0, 0, PRIMITIVE, 0, 0, 0, TEXEL0);
+                gDPSetPrimColor(gMainGfxPos++, 0, 0, state->ints.color.r, state->ints.color.g,
+                                state->ints.color.b, 0);
                 break;
-            case FOLD_RENDER_TYPE_0:
-            case FOLD_RENDER_TYPE_E:
-            case FOLD_RENDER_TYPE_10:
+            case IMGFX_RENDER_DEFAULT:
+            case IMGFX_RENDER_OVERLAY_RGB:
+            case IMGFX_RENDER_UNUSED:
+                // color: texture
+                // alpha: texture
                 gDPSetCombineMode(gMainGfxPos++, G_CC_DECALRGBA, G_CC_DECALRGBA);
                 break;
-            case FOLD_RENDER_TYPE_F:
-                gDPSetCombineLERP(gMainGfxPos++, 0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0, 0, 0, 0, TEXEL0, TEXEL0, 0,
-                                  PRIMITIVE, 0);
-                gDPSetPrimColor(gMainGfxPos++, 0, 0, 0, 0, 0, state->unk_1C[1][1]);
+            case IMGFX_RENDER_OVERLAY_RGBA:
+                // color: texture
+                // alpha: texture * prim
+                gDPSetCombineLERP(gMainGfxPos++, 
+                    0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0,
+                    0, 0, 0, TEXEL0, TEXEL0, 0, PRIMITIVE, 0);
+                gDPSetPrimColor(gMainGfxPos++, 0, 0, 0, 0, 0, state->ints.overlay.alpha);
                 break;
         }
     }
 
     switch (state->meshType) {
-        case FOLD_MESH_TYPE_0:
-            func_8013CFA8(state, mtx);
+        case IMGFX_MESH_DEFAULT:
+            imgfx_appendGfx_mesh_basic(state, mtx);
             break;
-        case FOLD_MESH_TYPE_1:
-        case FOLD_MESH_TYPE_3:
-            func_8013DAB4(state, mtx);
+        case IMGFX_MESH_GRID_WAVY:
+        case IMGFX_MESH_GRID_UNUSED:
+            imgfx_appendGfx_mesh_grid(state, mtx);
             break;
-        case FOLD_MESH_TYPE_2:
-            func_8013E2F0(state, mtx);
+        case IMGFX_MESH_ANIMATED:
+            imgfx_appendGfx_mesh_anim(state, mtx);
             break;
-        case FOLD_MESH_TYPE_4:
-            func_8013CFA8(state, mtx);
+        case IMGFX_MESH_STRIP:
+            imgfx_appendGfx_mesh_basic(state, mtx);
             gDPPipeSync(gMainGfxPos++);
-            func_8013E904(state, mtx);
+            imgfx_appendGfx_mesh_strip(state, mtx);
             break;
     }
 
     gDPPipeSync(gMainGfxPos++);
 
-    if (state->renderType == FOLD_RENDER_TYPE_C) {
+    if (state->renderType == IMGFX_RENDER_HOLOGRAM) {
         gDPSetAlphaCompare(gMainGfxPos++, G_AC_NONE);
         gDPSetAlphaDither(gMainGfxPos++, G_AD_DISABLE);
     }
 }
 
-void func_8013BC88(FoldState* state) {
-    s32 yOffset;
-    s32 xOffset;
-    s32 widthIncrement;
-    s32 heightIncrement;
-    s32 heightIncrement120;
+void imgfx_mesh_make_strip(ImgFXState* state) {
+    s32 offsetY;
+    s32 offsetX;
+    s32 stepY;
+    s32 rightColor;
+    s32 leftColor;
     s32 temp2;
-    s32 i;
+    s32 nextY;
 
-    widthIncrement = 0x1000 / fold_currentImage->width;
-    if (widthIncrement > fold_currentImage->height) {
-        widthIncrement = fold_currentImage->height;
+    stepY = (128 * 32) / ImgFXCurrentTexturePtr->tex.width;
+    if (stepY > ImgFXCurrentTexturePtr->tex.height) {
+        stepY = ImgFXCurrentTexturePtr->tex.height;
     }
 
-    xOffset = fold_currentImage->xOffset;
-    yOffset = fold_currentImage->yOffset;
-    state->firstVtxIdx = fold_vtxCount;
+    offsetX = ImgFXCurrentTexturePtr->tex.xOffset;
+    offsetY = ImgFXCurrentTexturePtr->tex.yOffset;
+    state->firstVtxIdx = imgfx_vtxCount;
 
-    fold_vtxBuf[fold_vtxCount].v.ob[0] = xOffset;
-    fold_vtxBuf[fold_vtxCount].v.ob[1] = yOffset;
-    fold_vtxBuf[fold_vtxCount].v.ob[2] = 0;
-    fold_vtxBuf[fold_vtxCount].v.tc[0] = 0x2000;
-    fold_vtxBuf[fold_vtxCount].v.tc[1] = temp2 = 0x2000; // required to match
-    fold_vtxBuf[fold_vtxCount].v.cn[0] = 240;
-    fold_vtxBuf[fold_vtxCount].v.cn[1] = 240;
-    fold_vtxBuf[fold_vtxCount].v.cn[2] = 240;
-    fold_vtxBuf[fold_vtxCount + 1].v.ob[0] = fold_currentImage->width + xOffset;
-    fold_vtxBuf[fold_vtxCount + 1].v.ob[1] = yOffset;
-    fold_vtxBuf[fold_vtxCount + 1].v.ob[2] = 0;
-    fold_vtxBuf[fold_vtxCount + 1].v.tc[0] = (fold_currentImage->width + 256) * 32;
-    fold_vtxBuf[fold_vtxCount + 1].v.tc[1] = temp2;
-    fold_vtxBuf[fold_vtxCount + 1].v.cn[0] = 120;
-    fold_vtxBuf[fold_vtxCount + 1].v.cn[1] = 120;
-    fold_vtxBuf[fold_vtxCount + 1].v.cn[2] = 120;
+    // create first pair of vertices to begin the strip
+    // 'left' side
+    imgfx_vtxBuf[imgfx_vtxCount].v.ob[0] = offsetX;
+    imgfx_vtxBuf[imgfx_vtxCount].v.ob[1] = offsetY;
+    imgfx_vtxBuf[imgfx_vtxCount].v.ob[2] = 0;
+    imgfx_vtxBuf[imgfx_vtxCount].v.tc[0] = (0 + 256) * 32;
+    imgfx_vtxBuf[imgfx_vtxCount].v.tc[1] = temp2 = (0 + 256) * 32; // required to match
+    imgfx_vtxBuf[imgfx_vtxCount].v.cn[0] = 240;
+    imgfx_vtxBuf[imgfx_vtxCount].v.cn[1] = 240;
+    imgfx_vtxBuf[imgfx_vtxCount].v.cn[2] = 240;
+    // 'right' side
+    imgfx_vtxBuf[imgfx_vtxCount + 1].v.ob[0] = ImgFXCurrentTexturePtr->tex.width + offsetX;
+    imgfx_vtxBuf[imgfx_vtxCount + 1].v.ob[1] = offsetY;
+    imgfx_vtxBuf[imgfx_vtxCount + 1].v.ob[2] = 0;
+    imgfx_vtxBuf[imgfx_vtxCount + 1].v.tc[0] = (ImgFXCurrentTexturePtr->tex.width + 256) * 32;
+    imgfx_vtxBuf[imgfx_vtxCount + 1].v.tc[1] = temp2;
+    imgfx_vtxBuf[imgfx_vtxCount + 1].v.cn[0] = 120;
+    imgfx_vtxBuf[imgfx_vtxCount + 1].v.cn[1] = 120;
+    imgfx_vtxBuf[imgfx_vtxCount + 1].v.cn[2] = 120;
 
-    for (i = widthIncrement; ; i += widthIncrement) {
-        heightIncrement = (i * 120) / fold_currentImage->height;
-        heightIncrement120 = heightIncrement + 120;
-        fold_vtxCount += 2;
-        fold_vtxBuf[fold_vtxCount].v.ob[0] = xOffset;
-        fold_vtxBuf[fold_vtxCount].v.ob[1] = yOffset - widthIncrement;
-        fold_vtxBuf[fold_vtxCount].v.ob[2] = 0;
-        fold_vtxBuf[fold_vtxCount].v.tc[0] = 0x2000;
-        fold_vtxBuf[fold_vtxCount].v.tc[1] = (i + 256) * 32;
-        fold_vtxBuf[fold_vtxCount].v.cn[0] = heightIncrement120;
-        fold_vtxBuf[fold_vtxCount].v.cn[1] = heightIncrement120;
-        fold_vtxBuf[fold_vtxCount].v.cn[2] = heightIncrement120;
-        fold_vtxBuf[fold_vtxCount + 1].v.ob[0] = fold_currentImage->width + xOffset;
-        fold_vtxBuf[fold_vtxCount + 1].v.ob[1] = yOffset - widthIncrement;
-        fold_vtxBuf[fold_vtxCount + 1].v.ob[2] = 0;
-        fold_vtxBuf[fold_vtxCount + 1].v.tc[0] = (fold_currentImage->width + 256) * 32;
-        fold_vtxBuf[fold_vtxCount + 1].v.tc[1] = (i + 256) * 32;
-        fold_vtxBuf[fold_vtxCount + 1].v.cn[0] = heightIncrement;
-        fold_vtxBuf[fold_vtxCount + 1].v.cn[1] = heightIncrement;
-        fold_vtxBuf[fold_vtxCount + 1].v.cn[2] = heightIncrement;
+    // create remaining pairs of vertices along the strip
+    nextY = stepY;
+    while (TRUE) {
+        rightColor = (nextY * 120) / ImgFXCurrentTexturePtr->tex.height;
+        leftColor = rightColor + 120;
+        imgfx_vtxCount += 2;
 
-        if (i != fold_currentImage->height) {
-            yOffset -= widthIncrement;
-            if (fold_currentImage->height < i + widthIncrement) {
-                widthIncrement = fold_currentImage->height - i;
+        // 'left' side
+        imgfx_vtxBuf[imgfx_vtxCount].v.ob[0] = offsetX;
+        imgfx_vtxBuf[imgfx_vtxCount].v.ob[1] = offsetY - stepY;
+        imgfx_vtxBuf[imgfx_vtxCount].v.ob[2] = 0;
+        imgfx_vtxBuf[imgfx_vtxCount].v.tc[0] = (0 + 256) * 32;
+        imgfx_vtxBuf[imgfx_vtxCount].v.tc[1] = (nextY + 256) * 32;
+        imgfx_vtxBuf[imgfx_vtxCount].v.cn[0] = leftColor;
+        imgfx_vtxBuf[imgfx_vtxCount].v.cn[1] = leftColor;
+        imgfx_vtxBuf[imgfx_vtxCount].v.cn[2] = leftColor;
+
+        // 'right' side
+        imgfx_vtxBuf[imgfx_vtxCount + 1].v.ob[0] = ImgFXCurrentTexturePtr->tex.width + offsetX;
+        imgfx_vtxBuf[imgfx_vtxCount + 1].v.ob[1] = offsetY - stepY;
+        imgfx_vtxBuf[imgfx_vtxCount + 1].v.ob[2] = 0;
+        imgfx_vtxBuf[imgfx_vtxCount + 1].v.tc[0] = (ImgFXCurrentTexturePtr->tex.width + 256) * 32;
+        imgfx_vtxBuf[imgfx_vtxCount + 1].v.tc[1] = (nextY + 256) * 32;
+        imgfx_vtxBuf[imgfx_vtxCount + 1].v.cn[0] = rightColor;
+        imgfx_vtxBuf[imgfx_vtxCount + 1].v.cn[1] = rightColor;
+        imgfx_vtxBuf[imgfx_vtxCount + 1].v.cn[2] = rightColor;
+
+        if (nextY != ImgFXCurrentTexturePtr->tex.height) {
+            offsetY -= stepY;
+            if (ImgFXCurrentTexturePtr->tex.height < nextY + stepY) {
+                stepY = ImgFXCurrentTexturePtr->tex.height - nextY;
             }
         } else {
-            fold_vtxCount += 2;
+            imgfx_vtxCount += 2;
             break;
         }
+        nextY += stepY;
     }
 
-    state->lastVtxIdx = fold_vtxCount - 1;
+    state->lastVtxIdx = imgfx_vtxCount - 1;
     state->subdivX = 1;
     state->subdivY = ((state->lastVtxIdx - state->firstVtxIdx) - 1) / 2;
 }
 
-void func_8013C048(FoldState* state) {
+void imgfx_mesh_make_grid(ImgFXState* state) {
     f32 divSizeX;
     f32 divSizeY;
     f32 posX;
@@ -1028,80 +1177,80 @@ void func_8013C048(FoldState* state) {
     Vtx* vtx;
     s32 i;
 
-    state->firstVtxIdx = fold_vtxCount;
-    divSizeX = fold_currentImage->width / (f32) state->subdivX;
-    divSizeY = fold_currentImage->height / (f32) state->subdivY;
-    posY = fold_currentImage->yOffset;
+    state->firstVtxIdx = imgfx_vtxCount;
+    divSizeX = ImgFXCurrentTexturePtr->tex.width / (f32) state->subdivX;
+    divSizeY = ImgFXCurrentTexturePtr->tex.height / (f32) state->subdivY;
+    posY = ImgFXCurrentTexturePtr->tex.yOffset;
     texV = 0.0f;
-    vtx = &fold_vtxBuf[fold_vtxCount];
+    vtx = &imgfx_vtxBuf[imgfx_vtxCount];
 
     for (i = 0; i <= state->subdivY; i++) {
         s32 j;
 
         if (i == state->subdivY) {
-            texV = fold_currentImage->height;
-            posY = fold_currentImage->yOffset - fold_currentImage->height;
+            texV = ImgFXCurrentTexturePtr->tex.height;
+            posY = ImgFXCurrentTexturePtr->tex.yOffset - ImgFXCurrentTexturePtr->tex.height;
         }
 
-        posX = fold_currentImage->xOffset;
+        posX = ImgFXCurrentTexturePtr->tex.xOffset;
         texU = 0.0f;
         for (j = 0; j <= state->subdivX; vtx++, j++) {
             if (j == state->subdivX) {
-                texU = fold_currentImage->width;
-                posX = fold_currentImage->xOffset + fold_currentImage->width;
+                texU = ImgFXCurrentTexturePtr->tex.width;
+                posX = ImgFXCurrentTexturePtr->tex.xOffset + ImgFXCurrentTexturePtr->tex.width;
             }
             vtx->n.ob[0] = posX;
             vtx->n.ob[1] = posY;
             vtx->n.ob[2] = 0;
             vtx->n.tc[0] = ((s32) texU + 256) * 32;
             vtx->n.tc[1] = ((s32) texV + 256) * 32;
-            fold_vtxCount++;
+            imgfx_vtxCount++;
             posX += divSizeX;
             texU += divSizeX;
         }
         posY -= divSizeY;
         texV += divSizeY;
     }
-    state->lastVtxIdx = fold_vtxCount - 1;
+    state->lastVtxIdx = imgfx_vtxCount - 1;
 }
 
-FoldGfxDescriptor* fold_load_gfx(FoldState* state) {
-    u8* romStart = fold_groupOffsets[state->unk_1C[0][0]] + fold_gfx_data_ROM_START;
-    FoldGfxDescriptor* descriptor = &fold_groupDescriptors[state->arrayIdx];
+ImgFXAnimHeader* imgfx_load_anim(ImgFXState* state) {
+    u8* romStart = ImgFXAnimOffsets[state->ints.anim.type] + imgfx_gfx_data_ROM_START;
+    ImgFXAnimHeader* anim = &ImgFXAnimHeaders[state->arrayIdx];
 
-    if (state->unk_64 != romStart) {
+    if (state->curAnimOffset != romStart) {
         u8* romEnd;
         s32 i;
 
-        state->unk_64 = romStart;
+        state->curAnimOffset = romStart;
 
-        dma_copy(state->unk_64, state->unk_64 + 0x10, descriptor);
+        dma_copy(state->curAnimOffset, state->curAnimOffset + sizeof(*anim), anim);
 
         if (state->vtxBufs[0] != NULL) {
-            fold_add_to_gfx_cache(state->vtxBufs[0], 1);
+            imgfx_add_to_cache(state->vtxBufs[0], 1);
             state->vtxBufs[0] = NULL;
         }
         if (state->vtxBufs[1] != NULL) {
-            fold_add_to_gfx_cache(state->vtxBufs[1], 1);
+            imgfx_add_to_cache(state->vtxBufs[1], 1);
             state->vtxBufs[1] = NULL;
         }
         if (state->gfxBufs[0] != NULL) {
-            fold_add_to_gfx_cache(state->gfxBufs[0], 1);
+            imgfx_add_to_cache(state->gfxBufs[0], 1);
             state->gfxBufs[0] = NULL;
         }
         if (state->gfxBufs[1] != NULL) {
-            // fold_add_to_gfx_cache(state->gfxBufs[1], 1);
+            // imgfx_add_to_cache(state->gfxBufs[1], 1);
             romEnd = (u8*) state->gfxBufs[1]; // required to match
-            fold_add_to_gfx_cache(state->gfxBufs[1], 1);
+            imgfx_add_to_cache(state->gfxBufs[1], 1);
             state->gfxBufs[1] = NULL;
         }
-        state->vtxBufs[0] = heap_malloc(descriptor->vtxCount * 0x10);
-        state->vtxBufs[1] = heap_malloc(descriptor->vtxCount * 0x10);
-        state->gfxBufs[0] = heap_malloc(descriptor->gfxCount * 8);
-        state->gfxBufs[1] = heap_malloc(descriptor->gfxCount * 8);
+        state->vtxBufs[0] = heap_malloc(anim->vtxCount * sizeof(Vtx));
+        state->vtxBufs[1] = heap_malloc(anim->vtxCount * sizeof(Vtx));
+        state->gfxBufs[0] = heap_malloc(anim->gfxCount * sizeof(Gfx));
+        state->gfxBufs[1] = heap_malloc(anim->gfxCount * sizeof(Gfx));
 
-        romStart = (s32)descriptor->gfx + fold_gfx_data_ROM_START;
-        romEnd = &romStart[descriptor->gfxCount * sizeof(*descriptor->gfx)];
+        romStart = imgfx_gfx_data_ROM_START + (s32)anim->gfxOffset;
+        romEnd = romStart + anim->gfxCount * sizeof(Gfx);
         dma_copy(romStart, romEnd, state->gfxBufs[0]);
         dma_copy(romStart, romEnd, state->gfxBufs[1]);
 
@@ -1119,241 +1268,250 @@ FoldGfxDescriptor* fold_load_gfx(FoldState* state) {
 
                 // If this command is a vertex command, adjust the vertex buffer address
                 if (cmd == G_VTX) {
-                    gfxBuffer[j-1].words.w1 = ((((s32) gfxBuffer[j-1].words.w1 - (s32) descriptor->vtx) / 3) * 4) +
+                    // ImgFXVtx structs are 0xC bytes while Vtx are 0x10, so we need a (4/3) scaling factor
+                    // to compute a new, equivalent Vtx[i] address for an existing ImgFXVtx[i] address.
+                    // Unfortunately, using sizeof here does not match.
+                    gfxBuffer[j-1].words.w1 = ((((s32) gfxBuffer[j-1].words.w1 - anim->keyframesOffset) / 3) * 4) +
                                               (s32) state->vtxBufs[i];
                 }
             } while (cmd != G_ENDDL);
         }
     }
 
-    return descriptor;
+    return anim;
 }
 
-void func_8013C3F0(FoldState* state) {
-    s32 sp10;
-    s32 nextStateIdx;
-    s32 currentStateIdx;
-    PackedVtx* currentAnimState;
-    PackedVtx* nextAnimState = NULL;
-    s32 animationPeriod = state->unk_1C[0][1];
-    s32 currentFrame = state->unk_3C[0][0];
-    s32 sp14 = state->unk_1C[0][2];
-    FoldGfxDescriptor* descriptor = fold_load_gfx(state);
+void imgfx_mesh_anim_update(ImgFXState* state) {
+    s32 absKeyframeInterval;
+    s32 nextKeyIdx;
+    s32 curKeyIdx;
+    ImgFXVtx* curKeyframe = NULL;
+    ImgFXVtx* nextKeyframe = NULL;
+    s32 keyframeInterval = state->ints.anim.interval;
+    s32 animStep = state->ints.anim.step;
+    s32 curSubframe = state->floats.anim.curFrame;
+    ImgFXAnimHeader* header = imgfx_load_anim(state);
     u8* romStart;
-    s32 i;
     f32 lerpAlpha;
+    s32 i;
 
-    if (descriptor == NULL) {
+    if (header == NULL) {
         return;
     }
 
-    if (state->flags & FOLD_STATE_FLAG_200) {
-        state->flags &= ~FOLD_STATE_FLAG_200;
-        if (state->flags & FOLD_STATE_FLAG_100) {
-            state->unk_3C[0][1] = descriptor->unk_0C - 1;
+    if (state->flags & IMGFX_FLAG_200) {
+        state->flags &= ~IMGFX_FLAG_200;
+        if (state->flags & IMGFX_FLAG_REVERSE_ANIM) {
+            state->floats.anim.curIdx = header->keyframesCount - 1;
         }
     }
-    currentStateIdx = state->unk_3C[0][1];
-    sp10 = abs(animationPeriod);
-    if (state->flags & FOLD_STATE_FLAG_4000) {
-        nextStateIdx = currentStateIdx;
+    curKeyIdx = state->floats.anim.curIdx;
+    absKeyframeInterval = abs(keyframeInterval);
+    if (state->flags & IMGFX_FLAG_4000) {
+        nextKeyIdx = curKeyIdx;
     } else {
-        if (state->flags & FOLD_STATE_FLAG_100) {
-            nextStateIdx = currentStateIdx - 1;
-            if (nextStateIdx < 0) {
-                nextStateIdx = currentStateIdx;
-                if (state->flags & FOLD_STATE_FLAG_80) {
-                    nextStateIdx = descriptor->unk_0C - 1;
+        if (state->flags & IMGFX_FLAG_REVERSE_ANIM) {
+            nextKeyIdx = curKeyIdx - 1;
+            if (nextKeyIdx < 0) {
+                nextKeyIdx = curKeyIdx;
+                if (state->flags & IMGFX_FLAG_LOOP_ANIM) {
+                    nextKeyIdx = header->keyframesCount - 1;
                 }
             }
         } else {
-            nextStateIdx = currentStateIdx + 1;
-            if (nextStateIdx == descriptor->unk_0C) {
-                nextStateIdx = currentStateIdx;
-                if (state->flags & FOLD_STATE_FLAG_80) {
-                    nextStateIdx = 0;
+            nextKeyIdx = curKeyIdx + 1;
+            if (nextKeyIdx == header->keyframesCount) {
+                nextKeyIdx = curKeyIdx;
+                if (state->flags & IMGFX_FLAG_LOOP_ANIM) {
+                    nextKeyIdx = 0;
                 }
             }
         }
     }
 
-    currentAnimState = heap_malloc(descriptor->vtxCount * sizeof(*currentAnimState));
-    romStart = (u8*)((s32)fold_gfx_data_ROM_START + (s32)descriptor->vtx + currentStateIdx * descriptor->vtxCount * sizeof(*currentAnimState));
-    dma_copy(romStart, romStart + descriptor->vtxCount * sizeof(*currentAnimState), currentAnimState);
-    if (animationPeriod >= 2) {
-        nextAnimState = heap_malloc(descriptor->vtxCount * sizeof(*nextAnimState));
-        romStart = (u8*)((s32)fold_gfx_data_ROM_START + (s32)descriptor->vtx + nextStateIdx * descriptor->vtxCount * sizeof(*currentAnimState));
-        dma_copy(romStart, romStart + descriptor->vtxCount * sizeof(*nextAnimState), nextAnimState);
+    // find the current + next keyframe vertex data
+    curKeyframe = heap_malloc(header->vtxCount * sizeof(ImgFXVtx));
+    romStart = (u8*)((s32)imgfx_gfx_data_ROM_START + header->keyframesOffset + curKeyIdx * header->vtxCount * sizeof(ImgFXVtx));
+    dma_copy(romStart, romStart + header->vtxCount * sizeof(ImgFXVtx), curKeyframe);
+    if (keyframeInterval > 1) {
+        nextKeyframe = heap_malloc(header->vtxCount * sizeof(*nextKeyframe));
+        romStart = (u8*)((s32)imgfx_gfx_data_ROM_START + header->keyframesOffset + nextKeyIdx * header->vtxCount * sizeof(ImgFXVtx));
+        dma_copy(romStart, romStart + header->vtxCount * sizeof(ImgFXVtx), nextKeyframe);
     }
 
-    lerpAlpha = (f32) currentFrame / (f32) animationPeriod;
-    for (i = 0; i < descriptor->vtxCount; i++) {
-        if (state->meshType != FOLD_MESH_TYPE_2) {
+    lerpAlpha = (f32) curSubframe / (f32) keyframeInterval;
+    for (i = 0; i < header->vtxCount; i++) {
+        if (state->meshType != IMGFX_MESH_ANIMATED) {
             return;
         }
 
-        if (animationPeriod >= 2) {
-            if (descriptor->useAbsoluteValues & 1) {
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[0] = currentAnimState[i].ob[0] + (nextAnimState[i].ob[0] - currentAnimState[i].ob[0]) * lerpAlpha;
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[1] = currentAnimState[i].ob[1] + (nextAnimState[i].ob[1] - currentAnimState[i].ob[1]) * lerpAlpha;
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[2] = currentAnimState[i].ob[2] + (nextAnimState[i].ob[2] - currentAnimState[i].ob[2]) * lerpAlpha;
+        if (keyframeInterval > 1) {
+            // get vertex position, interpolated between keyframes
+            if (header->flags & IMGFX_ANIM_FLAG_ABSOLUTE_COORDS) {
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[0] = (s16)(curKeyframe[i].ob[0] + (nextKeyframe[i].ob[0] - curKeyframe[i].ob[0]) * lerpAlpha);
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[1] = (s16)(curKeyframe[i].ob[1] + (nextKeyframe[i].ob[1] - curKeyframe[i].ob[1]) * lerpAlpha);
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[2] = (s16)(curKeyframe[i].ob[2] + (nextKeyframe[i].ob[2] - curKeyframe[i].ob[2]) * lerpAlpha);
             } else {
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[0] = (s16)(currentAnimState[i].ob[0] + (nextAnimState[i].ob[0] - currentAnimState[i].ob[0]) * lerpAlpha) * 0.01 * fold_currentImage->width;
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[1] = (s16)(currentAnimState[i].ob[1] + (nextAnimState[i].ob[1] - currentAnimState[i].ob[1]) * lerpAlpha) * 0.01 * fold_currentImage->height;
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[2] = (s16)(currentAnimState[i].ob[2] + (nextAnimState[i].ob[2] - currentAnimState[i].ob[2]) * lerpAlpha) * 0.01 * ((fold_currentImage->width + fold_currentImage->height) / 2);
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[0] = (s16)(curKeyframe[i].ob[0] + (nextKeyframe[i].ob[0] - curKeyframe[i].ob[0]) * lerpAlpha) * 0.01 * ImgFXCurrentTexturePtr->tex.width;
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[1] = (s16)(curKeyframe[i].ob[1] + (nextKeyframe[i].ob[1] - curKeyframe[i].ob[1]) * lerpAlpha) * 0.01 * ImgFXCurrentTexturePtr->tex.height;
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[2] = (s16)(curKeyframe[i].ob[2] + (nextKeyframe[i].ob[2] - curKeyframe[i].ob[2]) * lerpAlpha) * 0.01 * ((ImgFXCurrentTexturePtr->tex.width + ImgFXCurrentTexturePtr->tex.height) / 2);
             }
-            if (state->flags & (FOLD_STATE_FLAG_8000 | FOLD_STATE_FLAG_2000)) {
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[0] = (s32)(currentAnimState[i].cn[0] + (nextAnimState[i].cn[0] - currentAnimState[i].cn[0]) * lerpAlpha);
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[1] = (s32)(currentAnimState[i].cn[1] + (nextAnimState[i].cn[1] - currentAnimState[i].cn[1]) * lerpAlpha);
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[2] = (s32)(currentAnimState[i].cn[2] + (nextAnimState[i].cn[2] - currentAnimState[i].cn[2]) * lerpAlpha);
+            // get vertex color
+            if (state->flags & (IMGFX_FLAG_2000 | IMGFX_FLAG_8000)) {
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[0] = (s16)(curKeyframe[i].cn[0] + (nextKeyframe[i].cn[0] - curKeyframe[i].cn[0]) * lerpAlpha);
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[1] = (s16)(curKeyframe[i].cn[1] + (nextKeyframe[i].cn[1] - curKeyframe[i].cn[1]) * lerpAlpha);
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[2] = (s16)(curKeyframe[i].cn[2] + (nextKeyframe[i].cn[2] - curKeyframe[i].cn[2]) * lerpAlpha);
             } else {
                 state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[0] =
                 state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[1] =
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[2] = 240.0 - (currentAnimState[i].tc[0] + currentAnimState[i].tc[1]) * 1.2;
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[2] = 240.0 - (curKeyframe[i].tc[0] + curKeyframe[i].tc[1]) * 1.2;
             }
         } else {
-            if (descriptor->useAbsoluteValues & 1) {
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[0] = currentAnimState[i].ob[0];
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[1] = currentAnimState[i].ob[1];
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[2] = currentAnimState[i].ob[2];
+            // get vertex position
+            if (header->flags & IMGFX_ANIM_FLAG_ABSOLUTE_COORDS) {
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[0] = curKeyframe[i].ob[0];
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[1] = curKeyframe[i].ob[1];
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[2] = curKeyframe[i].ob[2];
             } else {
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[0] = currentAnimState[i].ob[0] * 0.01 * fold_currentImage->width;
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[1] = currentAnimState[i].ob[1] * 0.01 * fold_currentImage->height;
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[2] = currentAnimState[i].ob[2] * 0.01 * ((fold_currentImage->width + fold_currentImage->height) / 2);
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[0] = curKeyframe[i].ob[0] * 0.01 * ImgFXCurrentTexturePtr->tex.width;
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[1] = curKeyframe[i].ob[1] * 0.01 * ImgFXCurrentTexturePtr->tex.height;
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.ob[2] = curKeyframe[i].ob[2] * 0.01 * ((ImgFXCurrentTexturePtr->tex.width + ImgFXCurrentTexturePtr->tex.height) / 2);
             }
-            if (state->flags & (FOLD_STATE_FLAG_8000 | FOLD_STATE_FLAG_2000)) {
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[0] = currentAnimState[i].cn[0];
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[1] = currentAnimState[i].cn[1];
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[2] = currentAnimState[i].cn[2];
+            // get vertex color
+            if (state->flags & (IMGFX_FLAG_2000 | IMGFX_FLAG_8000)) {
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[0] = curKeyframe[i].cn[0];
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[1] = curKeyframe[i].cn[1];
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[2] = curKeyframe[i].cn[2];
             } else {
                 state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[0] =
                 state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[1] =
-                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[2] = 240.0 - (currentAnimState[i].tc[0] + currentAnimState[i].tc[1]) * 1.2;
+                state->vtxBufs[gCurrentDisplayContextIndex][i].v.cn[2] = 240.0 - (curKeyframe[i].tc[0] + curKeyframe[i].tc[1]) * 1.2;
             }
         }
-        if (descriptor->useAbsoluteValues & 1) {
-            state->vtxBufs[gCurrentDisplayContextIndex][i].v.tc[0] = (currentAnimState[i].tc[0] + 0x100) << 5;
-            state->vtxBufs[gCurrentDisplayContextIndex][i].v.tc[1] = (currentAnimState[i].tc[1] + 0x100) << 5;
+        // get vertex tex coords
+        if (header->flags & IMGFX_ANIM_FLAG_ABSOLUTE_COORDS) {
+            state->vtxBufs[gCurrentDisplayContextIndex][i].v.tc[0] = (curKeyframe[i].tc[0] + 256) * 32;
+            state->vtxBufs[gCurrentDisplayContextIndex][i].v.tc[1] = (curKeyframe[i].tc[1] + 256) * 32;
         } else {
-            state->vtxBufs[gCurrentDisplayContextIndex][i].v.tc[0] = ((s32)(currentAnimState[i].tc[0] * 0.01 * fold_currentImage->width) + 0x100) << 5;
-            state->vtxBufs[gCurrentDisplayContextIndex][i].v.tc[1] = ((s32)(currentAnimState[i].tc[1] * 0.01 * fold_currentImage->height) + 0x100) << 5;
+            state->vtxBufs[gCurrentDisplayContextIndex][i].v.tc[0] = ((s32)(curKeyframe[i].tc[0] * 0.01 * ImgFXCurrentTexturePtr->tex.width) + 256) * 32;
+            state->vtxBufs[gCurrentDisplayContextIndex][i].v.tc[1] = ((s32)(curKeyframe[i].tc[1] * 0.01 * ImgFXCurrentTexturePtr->tex.height) + 256) * 32;
         }
     }
 
     state->firstVtxIdx = 0;
-    state->lastVtxIdx = descriptor->vtxCount - 1;
+    state->lastVtxIdx = header->vtxCount - 1;
 
-    heap_free(currentAnimState);
-    if (nextAnimState != NULL) {
-        heap_free(nextAnimState);
+    heap_free(curKeyframe);
+    if (nextKeyframe != NULL) {
+        heap_free(nextKeyframe);
     }
 
-    if (sp14 == 0 || gGameStatusPtr->frameCounter % sp14 != 0) {
+    if (animStep == 0 || gGameStatusPtr->frameCounter % animStep != 0) {
         return;
     }
 
-    if (animationPeriod > 0) {
-        currentFrame++;
-        if (currentFrame >= animationPeriod) {
-            if (state->flags & FOLD_STATE_FLAG_100) {
-                currentStateIdx--;
-                if (currentStateIdx < 0) {
-                    if (state->flags & FOLD_STATE_FLAG_80) {
-                        currentStateIdx = descriptor->unk_0C - 1;
+    if (keyframeInterval > 0) {
+        curSubframe++;
+        if (curSubframe >= keyframeInterval) {
+            if (state->flags & IMGFX_FLAG_REVERSE_ANIM) {
+                curKeyIdx--;
+                if (curKeyIdx < 0) {
+                    if (state->flags & IMGFX_FLAG_LOOP_ANIM) {
+                        curKeyIdx = header->keyframesCount - 1;
                     } else {
-                        if (state->flags & FOLD_STATE_FLAG_800) {
-                            currentStateIdx = 0;
-                            state->flags |= FOLD_STATE_FLAG_4000;
+                        if (state->flags & IMGFX_FLAG_800) {
+                            curKeyIdx = 0;
+                            state->flags |= IMGFX_FLAG_4000;
                         } else {
-                            state->flags |= FOLD_STATE_FLAG_1000;
+                            state->flags |= IMGFX_FLAG_ANIM_DONE;
                         }
                     }
                 }
             } else {
-                currentStateIdx++;
-                if (currentStateIdx >= descriptor->unk_0C) {
-                    if (state->flags & FOLD_STATE_FLAG_80) {
-                        currentStateIdx = 0;
+                curKeyIdx++;
+                if (curKeyIdx >= header->keyframesCount) {
+                    if (state->flags & IMGFX_FLAG_LOOP_ANIM) {
+                        curKeyIdx = 0;
                     } else {
-                        if (state->flags & FOLD_STATE_FLAG_800) {
-                            currentStateIdx--;
-                            state->flags |= FOLD_STATE_FLAG_4000;
+                        if (state->flags & IMGFX_FLAG_800) {
+                            curKeyIdx--;
+                            state->flags |= IMGFX_FLAG_4000;
                         } else {
-                            state->flags |= FOLD_STATE_FLAG_1000;
+                            state->flags |= IMGFX_FLAG_ANIM_DONE;
                         }
                     }
                 }
             }
-            currentFrame = 0;
+            curSubframe = 0;
         }
-    } else if (animationPeriod < 0) {
-        if (state->flags & FOLD_STATE_FLAG_100) {
-            currentStateIdx -= sp10;
-            if (currentStateIdx < 0) {
-                if (state->flags & FOLD_STATE_FLAG_80) {
-                    currentStateIdx += descriptor->unk_0C;
+    } else if (keyframeInterval < 0) {
+        if (state->flags & IMGFX_FLAG_REVERSE_ANIM) {
+            curKeyIdx -= absKeyframeInterval;
+            if (curKeyIdx < 0) {
+                if (state->flags & IMGFX_FLAG_LOOP_ANIM) {
+                    curKeyIdx += header->keyframesCount;
                 } else {
-                    if (state->flags & FOLD_STATE_FLAG_800) {
-                        currentStateIdx = 0;
-                        state->flags |= FOLD_STATE_FLAG_4000;
+                    if (state->flags & IMGFX_FLAG_800) {
+                        curKeyIdx = 0;
+                        state->flags |= IMGFX_FLAG_4000;
                     } else {
-                        state->flags |= FOLD_STATE_FLAG_1000;
+                        state->flags |= IMGFX_FLAG_ANIM_DONE;
                     }
                 }
             }
         } else {
-            currentStateIdx += sp10;
-            if (currentStateIdx >= descriptor->unk_0C) {
-                if (state->flags & FOLD_STATE_FLAG_80) {
-                    currentStateIdx %= descriptor->unk_0C;
+            curKeyIdx += absKeyframeInterval;
+            if (curKeyIdx >= header->keyframesCount) {
+                if (state->flags & IMGFX_FLAG_LOOP_ANIM) {
+                    curKeyIdx %= header->keyframesCount;
                 } else {
-                    if (state->flags & FOLD_STATE_FLAG_800) {
-                        currentStateIdx = descriptor->unk_0C - 1;
-                        state->flags |= FOLD_STATE_FLAG_4000;
+                    if (state->flags & IMGFX_FLAG_800) {
+                        curKeyIdx = header->keyframesCount - 1;
+                        state->flags |= IMGFX_FLAG_4000;
                     } else {
-                        state->flags |= FOLD_STATE_FLAG_1000;
+                        state->flags |= IMGFX_FLAG_ANIM_DONE;
                     }
                 }
             }
         }
     }
 
-    state->unk_3C[0][0] = currentFrame;
-    state->unk_3C[0][1] = currentStateIdx;
+    state->floats.anim.curFrame = curSubframe;
+    state->floats.anim.curIdx = curKeyIdx;
 }
 
-void func_8013CFA8(FoldState* state, Matrix4f mtx) {
+void imgfx_appendGfx_mesh_basic(ImgFXState* state, Matrix4f mtx) {
     s32 i;
 
-    if (!(state->flags & FOLD_STATE_FLAG_20)) {
+    if (!(state->flags & IMGFX_FLAG_SKIP_TEX_SETUP)) {
         gDPSetTextureLUT(gMainGfxPos++, G_TT_RGBA16);
-        gDPLoadTLUT_pal16(gMainGfxPos++, 0, fold_currentImage->palette);
+        gDPLoadTLUT_pal16(gMainGfxPos++, 0, ImgFXCurrentTexturePtr->tex.palette);
     }
 
     i = state->firstVtxIdx;
 
     while (TRUE) {
         Camera* cam;
-        s32 uls = (fold_vtxBuf[i + 0].v.tc[0] >> 0x5) - 0x100;
-        s32 ult = (fold_vtxBuf[i + 0].v.tc[1] >> 0x5) - 0x100;
-        s32 lrs = (fold_vtxBuf[i + 3].v.tc[0] >> 0x5) - 0x100;
-        s32 lrt = (fold_vtxBuf[i + 3].v.tc[1] >> 0x5) - 0x100;
-        s32 someFlags = FOLD_STATE_FLAG_100000 | FOLD_STATE_FLAG_80000;
+        s32 uls = (imgfx_vtxBuf[i + 0].v.tc[0] >> 0x5) - 256;
+        s32 ult = (imgfx_vtxBuf[i + 0].v.tc[1] >> 0x5) - 256;
+        s32 lrs = (imgfx_vtxBuf[i + 3].v.tc[0] >> 0x5) - 256;
+        s32 lrt = (imgfx_vtxBuf[i + 3].v.tc[1] >> 0x5) - 256;
+        s32 someFlags = IMGFX_FLAG_100000 | IMGFX_FLAG_80000;
         s32 alpha;
         s32 alpha2;
 
-        if (!(state->flags & FOLD_STATE_FLAG_20)) {
+        if (!(state->flags & IMGFX_FLAG_SKIP_TEX_SETUP)) {
             if ((gSpriteShadingProfile->flags & 1)
                 && (state->arrayIdx != 0)
                 && (state->flags & someFlags)
-                && (   state->renderType == FOLD_RENDER_TYPE_0
-                    || state->renderType == FOLD_RENDER_TYPE_2
-                    || state->renderType == FOLD_RENDER_TYPE_F
-                    || state->renderType == FOLD_RENDER_TYPE_7)
+                && (   state->renderType == IMGFX_RENDER_DEFAULT
+                    || state->renderType == IMGFX_RENDER_MULTIPLY_ALPHA
+                    || state->renderType == IMGFX_RENDER_OVERLAY_RGBA
+                    || state->renderType == IMGFX_RENDER_MULTIPLY_SHADE_ALPHA)
             ) {
                 gDPScrollMultiTile2_4b(gMainGfxPos++,
-                    fold_currentImage->raster, G_IM_FMT_CI,
-                    fold_currentImage->width, fold_currentImage->height, // img size
+                    ImgFXCurrentTexturePtr->tex.raster, G_IM_FMT_CI,
+                    ImgFXCurrentTexturePtr->tex.width, ImgFXCurrentTexturePtr->tex.height, // img size
                     uls, ult, // top left
                     lrs - 1, lrt - 1, // bottom right
                     0, // palette
@@ -1361,25 +1519,25 @@ void func_8013CFA8(FoldState* state, Matrix4f mtx) {
                     8, 8, // mask
                     G_TX_NOLOD, G_TX_NOLOD, // shift,
                     0x100, 0x100); // scroll
-                gDPSetTile(gMainGfxPos++, G_IM_FMT_RGBA, G_IM_SIZ_16b, 4, 0x0100, 2, 0,
+                gDPSetTile(gMainGfxPos++, G_IM_FMT_RGBA, G_IM_SIZ_16b, 4, 0x100, 2, 0,
                             G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOMIRROR | G_TX_WRAP,
                             G_TX_NOMASK, G_TX_NOLOD);
                 gDPSetTileSize(gMainGfxPos++, 2, 0, 0, 252, 0);
 
                 alpha = 255;
                 switch (state->renderType) {
-                    case FOLD_RENDER_TYPE_0:
+                    case IMGFX_RENDER_DEFAULT:
                         break;
-                    case FOLD_RENDER_TYPE_2:
-                    case FOLD_RENDER_TYPE_F:
-                        alpha = state->unk_1C[1][3];
+                    case IMGFX_RENDER_MULTIPLY_ALPHA:
+                    case IMGFX_RENDER_OVERLAY_RGBA:
+                        alpha = state->ints.color.a;
                         break;
-                    case FOLD_RENDER_TYPE_7:
+                    case IMGFX_RENDER_MULTIPLY_SHADE_ALPHA:
                         alpha = -1;
                         break;
                 }
 
-                if ((gSpriteShadingProfile->flags & 2) && (D_80156954[0][0].arrayIdx != 0) && (state->flags & someFlags)) {
+                if ((gSpriteShadingProfile->flags & 2) && ((*ImgFXInstances)[0].arrayIdx != 0) && (state->flags & someFlags)) {
                     cam = &gCameras[gCurrentCamID];
 
                     if (gGameStatusPtr->isBattle == 2) {
@@ -1388,7 +1546,7 @@ void func_8013CFA8(FoldState* state, Matrix4f mtx) {
                         gSPViewport(gMainGfxPos++, &cam->vpAlt);
                     }
 
-                    gDPSetRenderMode(gMainGfxPos++, G_RM_PASS, state->unk_78);
+                    gDPSetRenderMode(gMainGfxPos++, G_RM_PASS, state->otherModeL);
 
                     if (alpha == -1) {
                         gDPSetCombineLERP(gMainGfxPos++, 0, 0, 0, 0, SHADE, 0, TEXEL1, 0, 0, 0, 0, 0, 0,
@@ -1399,15 +1557,15 @@ void func_8013CFA8(FoldState* state, Matrix4f mtx) {
                                             0, 0, 0, 0, COMBINED);
                     }
 
-                    gSPVertex(gMainGfxPos++, &fold_vtxBuf[i], 4, 0);
+                    gSPVertex(gMainGfxPos++, &imgfx_vtxBuf[i], 4, 0);
                     gSP2Triangles(gMainGfxPos++, 0, 2, 1, 0, 1, 2, 3, 0);
                     gDPPipeSync(gMainGfxPos++);
                 }
-                create_shading_palette(mtx, uls, ult, lrs, lrt, alpha, state->unk_78);
+                create_shading_palette(mtx, uls, ult, lrs, lrt, alpha, state->otherModeL);
             } else {
                 gDPScrollTextureTile_4b(gMainGfxPos++,
-                    fold_currentImage->raster, G_IM_FMT_CI,
-                    fold_currentImage->width, fold_currentImage->height, // img size
+                    ImgFXCurrentTexturePtr->tex.raster, G_IM_FMT_CI,
+                    ImgFXCurrentTexturePtr->tex.width, ImgFXCurrentTexturePtr->tex.height, // img size
                     uls, ult, // top left
                     lrs - 1, lrt - 1, // bottom right
                     0, // palette
@@ -1433,14 +1591,14 @@ void func_8013CFA8(FoldState* state, Matrix4f mtx) {
                     }
 
                     switch (state->renderType) {
-                        case FOLD_RENDER_TYPE_0:
+                        case IMGFX_RENDER_DEFAULT:
                             alpha2 = 255;
                             break;
-                        case FOLD_RENDER_TYPE_2:
-                        case FOLD_RENDER_TYPE_F:
-                            alpha2 = state->unk_1C[1][3];
+                        case IMGFX_RENDER_MULTIPLY_ALPHA:
+                        case IMGFX_RENDER_OVERLAY_RGBA:
+                            alpha2 = state->ints.color.a;
                             break;
-                        case FOLD_RENDER_TYPE_7:
+                        case IMGFX_RENDER_MULTIPLY_SHADE_ALPHA:
                             alpha2 = -1;
                             break;
                     }
@@ -1453,7 +1611,7 @@ void func_8013CFA8(FoldState* state, Matrix4f mtx) {
                                         ENVIRONMENT, 0, TEXEL0, 0);
                     }
 
-                    gSPVertex(gMainGfxPos++, &fold_vtxBuf[i], 4, 0);
+                    gSPVertex(gMainGfxPos++, &imgfx_vtxBuf[i], 4, 0);
                     gSP2Triangles(gMainGfxPos++, 0, 2, 1, 0, 1, 2, 3, 0);
                     gDPPipeSync(gMainGfxPos++);
 
@@ -1472,7 +1630,7 @@ void func_8013CFA8(FoldState* state, Matrix4f mtx) {
             }
         }
 
-        if ((gSpriteShadingProfile->flags & 2) && D_80156954[0][0].arrayIdx != 0 && (state->flags & someFlags)) {
+        if ((gSpriteShadingProfile->flags & 2) && (*ImgFXInstances)[0].arrayIdx != 0 && (state->flags & someFlags)) {
             cam = &gCameras[gCurrentCamID];
             if (gGameStatusPtr->isBattle == 2) {
                 gSPViewport(gMainGfxPos++, &D_8014EE40);
@@ -1483,7 +1641,7 @@ void func_8013CFA8(FoldState* state, Matrix4f mtx) {
             }
         }
 
-        gSPVertex(gMainGfxPos++, &fold_vtxBuf[i], 4, 0);
+        gSPVertex(gMainGfxPos++, &imgfx_vtxBuf[i], 4, 0);
         gSP2Triangles(gMainGfxPos++, 0, 2, 1, 0, 1, 2, 3, 0);
 
         if (i + 3 >= state->lastVtxIdx) {
@@ -1494,13 +1652,13 @@ void func_8013CFA8(FoldState* state, Matrix4f mtx) {
     }
 }
 
-void func_8013DAB4(FoldState* state, Matrix4f mtx) {
+void imgfx_appendGfx_mesh_grid(ImgFXState* state, Matrix4f mtx) {
     s32 i, j;
     s32 firstVtxIdx;
 
-    if (!(state->flags & FOLD_STATE_FLAG_20)) {
+    if (!(state->flags & IMGFX_FLAG_SKIP_TEX_SETUP)) {
         gDPSetTextureLUT(gMainGfxPos++, G_TT_RGBA16);
-        gDPLoadTLUT_pal16(gMainGfxPos++, 0, fold_currentImage->palette);
+        gDPLoadTLUT_pal16(gMainGfxPos++, 0, ImgFXCurrentTexturePtr->tex.palette);
     }
 
     firstVtxIdx = state->firstVtxIdx;
@@ -1510,19 +1668,19 @@ void func_8013DAB4(FoldState* state, Matrix4f mtx) {
             s32 urIdx = firstVtxIdx + i * (state->subdivX + 1) + j + 1;
             s32 llIdx = firstVtxIdx + (i + 1) * (state->subdivX + 1) + j;
             s32 lrIdx = firstVtxIdx + (i + 1) * (state->subdivX + 1) + j + 1;
-            if (!(state->flags & FOLD_STATE_FLAG_20)) {
+            if (!(state->flags & IMGFX_FLAG_SKIP_TEX_SETUP)) {
                 if ((gSpriteShadingProfile->flags & 1) &&
-                    (*D_80156954)[0].arrayIdx != 0 &&
-                    (state->flags & (FOLD_STATE_FLAG_100000 | FOLD_STATE_FLAG_80000)) &&
-                    (state->renderType == FOLD_RENDER_TYPE_0
-                    || state->renderType == FOLD_RENDER_TYPE_2
-                    || state->renderType == FOLD_RENDER_TYPE_7)) {
+                    (*ImgFXInstances)[0].arrayIdx != 0 &&
+                    (state->flags & (IMGFX_FLAG_100000 | IMGFX_FLAG_80000)) &&
+                    (state->renderType == IMGFX_RENDER_DEFAULT
+                    || state->renderType == IMGFX_RENDER_MULTIPLY_ALPHA
+                    || state->renderType == IMGFX_RENDER_MULTIPLY_SHADE_ALPHA)) {
                     s32 alpha = 255;
                     gDPScrollMultiTile2_4b(gMainGfxPos++,
-                        fold_currentImage->raster, G_IM_FMT_CI,
-                        fold_currentImage->width, fold_currentImage->height, // img size
-                        (fold_vtxBuf[ulIdx].v.tc[0] >> 5) - 0x100, (fold_vtxBuf[ulIdx].v.tc[1] >> 5) - 0x100, // top left
-                        (fold_vtxBuf[lrIdx].v.tc[0] >> 5) - 0x100 - 1, (fold_vtxBuf[lrIdx].v.tc[1] >> 5) - 0x100 - 1, // bottom right
+                        ImgFXCurrentTexturePtr->tex.raster, G_IM_FMT_CI,
+                        ImgFXCurrentTexturePtr->tex.width, ImgFXCurrentTexturePtr->tex.height, // img size
+                        (imgfx_vtxBuf[ulIdx].v.tc[0] >> 5) - 0x100, (imgfx_vtxBuf[ulIdx].v.tc[1] >> 5) - 0x100, // top left
+                        (imgfx_vtxBuf[lrIdx].v.tc[0] >> 5) - 0x100 - 1, (imgfx_vtxBuf[lrIdx].v.tc[1] >> 5) - 0x100 - 1, // bottom right
                         0, // palette
                         G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, // clamp wrap mirror
                         8, 8, // mask
@@ -1531,27 +1689,27 @@ void func_8013DAB4(FoldState* state, Matrix4f mtx) {
                     gDPSetTile(gMainGfxPos++, G_IM_FMT_RGBA, G_IM_SIZ_16b, 4, 0x0100, 2, 0, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOLOD);
                     gDPSetTileSize(gMainGfxPos++, 2, 0, 0, 63 << 2, 0);
                     switch (state->renderType) {
-                        case FOLD_RENDER_TYPE_0:
+                        case IMGFX_RENDER_DEFAULT:
                             alpha = 255;
                             break;
-                        case FOLD_RENDER_TYPE_2:
-                            alpha = state->unk_1C[1][3];
+                        case IMGFX_RENDER_MULTIPLY_ALPHA:
+                            alpha = state->ints.color.a;
                             break;
-                        case FOLD_RENDER_TYPE_7:
+                        case IMGFX_RENDER_MULTIPLY_SHADE_ALPHA:
                             alpha = -1;
                             break;
 
                     }
                     create_shading_palette(mtx,
-                                           (fold_vtxBuf[ulIdx].v.tc[0] >> 5) - 0x100, (fold_vtxBuf[ulIdx].v.tc[1] >> 5) - 0x100,
-                                           (fold_vtxBuf[lrIdx].v.tc[0] >> 5) - 0x100, (fold_vtxBuf[lrIdx].v.tc[1] >> 5) - 0x100,
-                                           alpha, state->unk_78);
+                                           (imgfx_vtxBuf[ulIdx].v.tc[0] >> 5) - 0x100, (imgfx_vtxBuf[ulIdx].v.tc[1] >> 5) - 0x100,
+                                           (imgfx_vtxBuf[lrIdx].v.tc[0] >> 5) - 0x100, (imgfx_vtxBuf[lrIdx].v.tc[1] >> 5) - 0x100,
+                                           alpha, state->otherModeL);
                 } else {
                     gDPScrollTextureTile_4b(gMainGfxPos++,
-                        fold_currentImage->raster, G_IM_FMT_CI,
-                        fold_currentImage->width, fold_currentImage->height, // img size
-                        (fold_vtxBuf[ulIdx].v.tc[0] >> 5) - 0x100, (fold_vtxBuf[ulIdx].v.tc[1] >> 5) - 0x100, // top left
-                        (fold_vtxBuf[lrIdx].v.tc[0] >> 5) - 0x100 - 1, (fold_vtxBuf[lrIdx].v.tc[1] >> 5) - 0x100 - 1, // bottom right
+                        ImgFXCurrentTexturePtr->tex.raster, G_IM_FMT_CI,
+                        ImgFXCurrentTexturePtr->tex.width, ImgFXCurrentTexturePtr->tex.height, // img size
+                        (imgfx_vtxBuf[ulIdx].v.tc[0] >> 5) - 0x100, (imgfx_vtxBuf[ulIdx].v.tc[1] >> 5) - 0x100, // top left
+                        (imgfx_vtxBuf[lrIdx].v.tc[0] >> 5) - 0x100 - 1, (imgfx_vtxBuf[lrIdx].v.tc[1] >> 5) - 0x100 - 1, // bottom right
                         0, // palette
                         G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, // clamp wrap mirror
                         8, 8, // mask
@@ -1560,16 +1718,16 @@ void func_8013DAB4(FoldState* state, Matrix4f mtx) {
                 }
             }
 
-            gSPVertex(gMainGfxPos++, &fold_vtxBuf[ulIdx], 1, 0);
-            gSPVertex(gMainGfxPos++, &fold_vtxBuf[urIdx], 1, 1);
-            gSPVertex(gMainGfxPos++, &fold_vtxBuf[llIdx], 1, 2);
-            gSPVertex(gMainGfxPos++, &fold_vtxBuf[lrIdx], 1, 3);
+            gSPVertex(gMainGfxPos++, &imgfx_vtxBuf[ulIdx], 1, 0);
+            gSPVertex(gMainGfxPos++, &imgfx_vtxBuf[urIdx], 1, 1);
+            gSPVertex(gMainGfxPos++, &imgfx_vtxBuf[llIdx], 1, 2);
+            gSPVertex(gMainGfxPos++, &imgfx_vtxBuf[lrIdx], 1, 3);
             gSP2Triangles(gMainGfxPos++, 0, 2, 1, 0, 1, 2, 3, 0);
         }
     }
 }
 
-void func_8013E2F0(FoldState* state, Matrix4f mtx) {
+void imgfx_appendGfx_mesh_anim(ImgFXState* state, Matrix4f mtx) {
     if (state->vtxBufs[gCurrentDisplayContextIndex] == NULL || state->gfxBufs[gCurrentDisplayContextIndex] == NULL) {
         return;
     }
@@ -1577,20 +1735,20 @@ void func_8013E2F0(FoldState* state, Matrix4f mtx) {
     guScale(&gDisplayContext->matrixStack[gMatrixListPos], 0.1f, 0.1f, 0.1f);
     gSPMatrix(gMainGfxPos++, VIRTUAL_TO_PHYSICAL(&gDisplayContext->matrixStack[gMatrixListPos++]), G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
 
-    if (!(state->flags & FOLD_STATE_FLAG_20)) {
+    if (!(state->flags & IMGFX_FLAG_SKIP_TEX_SETUP)) {
         gDPSetTextureLUT(gMainGfxPos++, G_TT_RGBA16);
-        gDPLoadTLUT_pal16(gMainGfxPos++, 0, fold_currentImage->palette);
+        gDPLoadTLUT_pal16(gMainGfxPos++, 0, ImgFXCurrentTexturePtr->tex.palette);
         if ((gSpriteShadingProfile->flags & 1)
-            && (state->flags & (FOLD_STATE_FLAG_100000 | FOLD_STATE_FLAG_80000))
-            && (state->renderType == FOLD_RENDER_TYPE_0
-                || state->renderType == FOLD_RENDER_TYPE_2
-                || state->renderType == FOLD_RENDER_TYPE_7
-                || state->renderType == FOLD_RENDER_TYPE_B)
+            && (state->flags & (IMGFX_FLAG_100000 | IMGFX_FLAG_80000))
+            && (state->renderType == IMGFX_RENDER_DEFAULT
+                || state->renderType == IMGFX_RENDER_MULTIPLY_ALPHA
+                || state->renderType == IMGFX_RENDER_MULTIPLY_SHADE_ALPHA
+                || state->renderType == IMGFX_RENDER_ANIM)
         ) {
             s32 alpha = 255;
-            gDPScrollMultiTile2_4b(gMainGfxPos++, fold_currentImage->raster, G_IM_FMT_CI,
-                                    fold_currentImage->width, fold_currentImage->height,
-                                    0, 0, fold_currentImage->width - 1, fold_currentImage->height - 1, 0,
+            gDPScrollMultiTile2_4b(gMainGfxPos++, ImgFXCurrentTexturePtr->tex.raster, G_IM_FMT_CI,
+                                    ImgFXCurrentTexturePtr->tex.width, ImgFXCurrentTexturePtr->tex.height,
+                                    0, 0, ImgFXCurrentTexturePtr->tex.width - 1, ImgFXCurrentTexturePtr->tex.height - 1, 0,
                                     G_TX_CLAMP, G_TX_CLAMP, 8, 8, G_TX_NOLOD, G_TX_NOLOD,
                                     256, 256);
             gDPSetTile(gMainGfxPos++, G_IM_FMT_RGBA, G_IM_SIZ_16b, 4, 0x0100, 2, 0,
@@ -1598,23 +1756,23 @@ void func_8013E2F0(FoldState* state, Matrix4f mtx) {
             gDPSetTileSize(gMainGfxPos++, 2, 0, 0, 252, 0);
 
             switch (state->renderType) {
-                case FOLD_RENDER_TYPE_0:
-                case FOLD_RENDER_TYPE_B:
+                case IMGFX_RENDER_DEFAULT:
+                case IMGFX_RENDER_ANIM:
                     alpha = 255;
                     break;
-                case FOLD_RENDER_TYPE_2:
-                    alpha = state->unk_1C[1][3];
+                case IMGFX_RENDER_MULTIPLY_ALPHA:
+                    alpha = state->ints.color.a;
                     break;
-                case FOLD_RENDER_TYPE_7:
+                case IMGFX_RENDER_MULTIPLY_SHADE_ALPHA:
                     alpha = -1;
                     break;
 
             }
-            create_shading_palette(mtx, 0, 0, fold_currentImage->width, fold_currentImage->height, alpha, state->unk_78);
+            create_shading_palette(mtx, 0, 0, ImgFXCurrentTexturePtr->tex.width, ImgFXCurrentTexturePtr->tex.height, alpha, state->otherModeL);
         } else {
-            gDPScrollTextureTile_4b(gMainGfxPos++, fold_currentImage->raster, G_IM_FMT_CI,
-                                    fold_currentImage->width, fold_currentImage->height,
-                                    0, 0, fold_currentImage->width - 1, fold_currentImage->height - 1, 0,
+            gDPScrollTextureTile_4b(gMainGfxPos++, ImgFXCurrentTexturePtr->tex.raster, G_IM_FMT_CI,
+                                    ImgFXCurrentTexturePtr->tex.width, ImgFXCurrentTexturePtr->tex.height,
+                                    0, 0, ImgFXCurrentTexturePtr->tex.width - 1, ImgFXCurrentTexturePtr->tex.height - 1, 0,
                                     G_TX_CLAMP, G_TX_CLAMP, 8, 8, G_TX_NOLOD, G_TX_NOLOD,
                                     256, 256);
         }
@@ -1623,21 +1781,23 @@ void func_8013E2F0(FoldState* state, Matrix4f mtx) {
     gSPPopMatrix(gMainGfxPos++, G_MTX_MODELVIEW);
 }
 
-void func_8013E904(FoldState* state, Matrix4f mtx) {
-    UnkFoldStruct* ufs = (UnkFoldStruct*)state->unk_1C[1][0];
+void imgfx_appendGfx_mesh_strip(ImgFXState* state, Matrix4f mtx) {
+    ImgFXOverlayTexture* ufs = state->ints.overlay.pattern;
     s32 shifts = integer_log(ufs->width, 2);
     s32 shiftt = integer_log(ufs->height, 2);
     s32 uls, ult;
     s32 lrs, lrt;
 
-    guScale(&gDisplayContext->matrixStack[gMatrixListPos], (f32)fold_currentImage->width / 100.0, (f32)fold_currentImage->height / 100.0, 1.0f);
+    guScale(&gDisplayContext->matrixStack[gMatrixListPos], (f32)ImgFXCurrentTexturePtr->tex.width / 100.0, (f32)ImgFXCurrentTexturePtr->tex.height / 100.0, 1.0f);
     gSPMatrix(gMainGfxPos++, VIRTUAL_TO_PHYSICAL(&gDisplayContext->matrixStack[gMatrixListPos++]), G_MTX_PUSH | G_MTX_MUL | G_MTX_MODELVIEW);
     gDPSetRenderMode(gMainGfxPos++, G_RM_ZB_XLU_DECAL, G_RM_ZB_XLU_DECAL2);
 
-    if (state->renderType == FOLD_RENDER_TYPE_F) {
-        s32 temp = state->unk_1C[1][1];
-        gDPSetPrimColor(gMainGfxPos++, 0, 0, 0, 0, 0, temp);
-        gDPSetCombineLERP(gMainGfxPos++, TEXEL0, 0, SHADE, 0, TEXEL0, 0, PRIMITIVE, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, PRIMITIVE, 0);
+    if (state->renderType == IMGFX_RENDER_OVERLAY_RGBA) {
+        s32 alpha = state->ints.overlay.alpha;
+        gDPSetPrimColor(gMainGfxPos++, 0, 0, 0, 0, 0, alpha);
+        gDPSetCombineLERP(gMainGfxPos++,
+            TEXEL0, 0, SHADE, 0, TEXEL0, 0, PRIMITIVE, 0,
+            TEXEL0, 0, SHADE, 0, TEXEL0, 0, PRIMITIVE, 0);
     } else {
         gDPSetCombineMode(gMainGfxPos++, G_CC_MODULATEIA, G_CC_MODULATEIA);
     }
@@ -1648,71 +1808,71 @@ void func_8013E904(FoldState* state, Matrix4f mtx) {
                           G_TX_WRAP, G_TX_WRAP, shifts, shiftt, G_TX_NOLOD, G_TX_NOLOD,
                           256, 256);
 
-    uls = state->unk_3C[1][0];
-    ult = state->unk_3C[1][1];
-    lrs = ufs->width * 4 + state->unk_3C[1][0];
-    lrt = ufs->height * 4 + state->unk_3C[1][1];
+    uls = state->floats.overlay.posX;
+    ult = state->floats.overlay.posY;
+    lrs = ufs->width * 4 + state->floats.overlay.posX;
+    lrt = ufs->height * 4 + state->floats.overlay.posY;
     gDPSetTileSize(gMainGfxPos++, G_TX_RENDERTILE, uls, ult, lrs, lrt);
 
-    state->unk_3C[1][0] = (s32)(state->unk_3C[1][0] + ufs->unk_0C) % (ufs->width * 4);
-    state->unk_3C[1][1] = (s32)(state->unk_3C[1][1] + ufs->unk_10) % (ufs->height * 4);
-    gSPDisplayList(gMainGfxPos++, ufs->unk_14);
+    state->floats.overlay.posX = (s32)(state->floats.overlay.posX + ufs->offsetX) % (ufs->width * 4);
+    state->floats.overlay.posY = (s32)(state->floats.overlay.posY + ufs->offsetY) % (ufs->height * 4);
+    gSPDisplayList(gMainGfxPos++, ufs->displayList);
     gSPPopMatrix(gMainGfxPos++, G_MTX_MODELVIEW);
 }
 
-void func_8013EE48(FoldState* state) {
-    state->unk_3C[0][0] = 0.0f;
-    state->unk_3C[0][1] = 50.0f;
-    state->unk_3C[0][2] = 30.0f;
+void imgfx_wavy_init(ImgFXState* state) {
+    state->floats.wavy.phase1 = 0.0f;
+    state->floats.wavy.phase2 = 50.0f;
+    state->floats.wavy.phase3 = 30.0f;
 }
 
-void func_8013EE68(FoldState* state) {
+void imgfx_mesh_make_wavy(ImgFXState* state) {
     Vtx* v1;
     Vtx* v2;
     Vtx* v3;
-    f32 temp_f20;
-    f32 temp_f20_2;
-    f32 temp_f20_3;
+    f32 vx;
+    f32 vy;
+    f32 vz;
+    f32 angle1;
     f32 angle2;
     f32 angle3;
-    f32 angle1;
-    s32 amt;
-    f32 phi_f8;
-    f32 phi_f6;
-    f32 phi_f4;
+    f32 phase1;
+    f32 phase2;
+    f32 phase3;
     s32 angleInc;
+    s32 amt;
     s32 sign;
     s32 i;
 
-    phi_f8 = (f32) gGameStatusPtr->frameCounter / 10.3;
-    while (phi_f8 > 360.0) {
-        phi_f8 -= 360.0;
+    phase1 = (f32) gGameStatusPtr->frameCounter / 10.3;
+    while (phase1 > 360.0) {
+        phase1 -= 360.0;
     }
 
-    phi_f6 = (f32) (gGameStatusPtr->frameCounter + 40) / 11.2;
-    while (phi_f6 > 360.0) {
-        phi_f6 -= 360.0;
+    phase2 = (f32) (gGameStatusPtr->frameCounter + 40) / 11.2;
+    while (phase2 > 360.0) {
+        phase2 -= 360.0;
     }
 
-    phi_f4 = (f32) (gGameStatusPtr->frameCounter + 25) / 10.8;
-    while (phi_f4 > 360.0) {
-        phi_f4 -= 360.0;
+    phase3 = (f32) (gGameStatusPtr->frameCounter + 25) / 10.8;
+    while (phase3 > 360.0) {
+        phase3 -= 360.0;
     }
 
-    state->unk_3C[0][0] = phi_f8;
-    state->unk_3C[0][1] = phi_f6;
-    state->unk_3C[0][2] = phi_f4;
+    state->floats.wavy.phase1 = phase1;
+    state->floats.wavy.phase2 = phase2;
+    state->floats.wavy.phase3 = phase3;
 
-    if (state->unk_3C[0][0] >= 360.0) {
-        state->unk_3C[0][0] -= 360.0;
+    if (state->floats.wavy.phase1 >= 360.0) {
+        state->floats.wavy.phase1-= 360.0;
     }
 
-    if (state->unk_3C[0][1] >= 360.0) {
-        state->unk_3C[0][1] -= 360.0;
+    if (state->floats.wavy.phase2 >= 360.0) {
+        state->floats.wavy.phase2 -= 360.0;
     }
 
-    if (state->unk_3C[0][2] >= 360.0) {
-        state->unk_3C[0][2] -= 360.0;
+    if (state->floats.wavy.phase3 >= 360.0) {
+        state->floats.wavy.phase3 -= 360.0;
     }
 
     sign = 0;
@@ -1720,40 +1880,40 @@ void func_8013EE68(FoldState* state) {
     amt = (state->lastVtxIdx - state->firstVtxIdx) - state->subdivX;
 
     for (i = 0; i < amt; i++) {
-        angle1 = state->unk_3C[0][0] + (angleInc * 45) + (sign * 180);
-        angle2 = state->unk_3C[0][1] + (angleInc * 45) + (sign * 180);
-        angle3 = state->unk_3C[0][2] + (angleInc * 45) + (sign * 180);
+        angle1 = state->floats.wavy.phase1 + (angleInc * 45) + (sign * 180);
+        angle2 = state->floats.wavy.phase2 + (angleInc * 45) + (sign * 180);
+        angle3 = state->floats.wavy.phase3 + (angleInc * 45) + (sign * 180);
 
         //TODO find better match
-        v1 = (Vtx*)((state->firstVtxIdx + i) * 16 + (s32)fold_vtxBuf);
-        temp_f20 = v1->v.ob[0];
-        v1->v.ob[0] = (temp_f20 + (sin_rad(angle1) * state->unk_1C[0][0])); // @bug? should be sin_deg?
+        v1 = (Vtx*)((state->firstVtxIdx + i) * sizeof(Vtx) + (s32)imgfx_vtxBuf);
+        vx = v1->v.ob[0];
+        v1->v.ob[0] = (vx + (sin_rad(angle1) * state->ints.wavy.mag.x)); // @bug? should be sin_deg?
 
-        v2 = (Vtx*)((state->firstVtxIdx + i) * 16 + (s32)fold_vtxBuf);
-        temp_f20_2 = v2->v.ob[1];
-        v2->v.ob[1] = (temp_f20_2 + (sin_rad(angle2) * state->unk_1C[0][1]));
+        v2 = (Vtx*)((state->firstVtxIdx + i) * sizeof(Vtx) + (s32)imgfx_vtxBuf);
+        vy = v2->v.ob[1];
+        v2->v.ob[1] = (vy + (sin_rad(angle2) * state->ints.wavy.mag.y));
 
-        v3 = (Vtx*)((state->firstVtxIdx + i) * 16 + (s32)fold_vtxBuf);
-        temp_f20_3 = v3->v.ob[2];
-        v3->v.ob[2] = (temp_f20_3 + (sin_rad(angle3) * state->unk_1C[0][2]));
+        v3 = (Vtx*)((state->firstVtxIdx + i) * sizeof(Vtx) + (s32)imgfx_vtxBuf);
+        vz = v3->v.ob[2];
+        v3->v.ob[2] = (vz + (sin_rad(angle3) * state->ints.wavy.mag.z));
 
         angleInc++;
-        if ((i % (s32) (state->subdivX + 1)) == 0) {
+        if (i % (state->subdivX + 1) == 0) {
             angleInc = 0;
             sign = !sign;
         }
     }
 }
 
-void func_8013F1F8(FoldState* state) {
-    f32 alpha = (f32)fold_currentImage->alphaMultiplier / 255.0;
+void imgfx_mesh_load_colors(ImgFXState* state) {
+    f32 alpha = (f32)ImgFXCurrentTexturePtr->alphaMultiplier / 255.0;
     s32 vtxCount = state->lastVtxIdx - state->firstVtxIdx;
     s32 i;
 
     for (i = 0; i <= vtxCount; i++) {
-        fold_vtxBuf[state->firstVtxIdx + i].v.cn[0] = state->buf[i * 4 + 0];
-        fold_vtxBuf[state->firstVtxIdx + i].v.cn[1] = state->buf[i * 4 + 1];
-        fold_vtxBuf[state->firstVtxIdx + i].v.cn[2] = state->buf[i * 4 + 2];
-        fold_vtxBuf[state->firstVtxIdx + i].v.cn[3] = state->buf[i * 4 + 3] * alpha;
+        imgfx_vtxBuf[state->firstVtxIdx + i].v.cn[0] = state->colorBuf[i].r;
+        imgfx_vtxBuf[state->firstVtxIdx + i].v.cn[1] = state->colorBuf[i].g;
+        imgfx_vtxBuf[state->firstVtxIdx + i].v.cn[2] = state->colorBuf[i].b;
+        imgfx_vtxBuf[state->firstVtxIdx + i].v.cn[3] = state->colorBuf[i].a * alpha;
     }
 }

@@ -6,7 +6,7 @@
 #include "rumble.h"
 #include "sprite.h"
 #include "model.h"
-#include "dx/config.h"
+#include "gcc/string.h"
 
 s32 WorldReverbModeMapping[] = { 0, 1, 2, 3 };
 
@@ -213,10 +213,10 @@ void load_map_by_IDs(s16 areaID, s16 mapID, s16 loadType) {
     }
 
     gCurrentCameraID = CAM_DEFAULT;
-    gCameras[CAM_DEFAULT].flags |= CAMERA_FLAG_ENABLED;
-    gCameras[CAM_BATTLE].flags |= CAMERA_FLAG_ENABLED;
-    gCameras[CAM_TATTLE].flags |= CAMERA_FLAG_ENABLED;
-    gCameras[CAM_3].flags |= CAMERA_FLAG_ENABLED;
+    gCameras[CAM_DEFAULT].flags |= CAMERA_FLAG_DISABLED;
+    gCameras[CAM_BATTLE].flags |= CAMERA_FLAG_DISABLED;
+    gCameras[CAM_TATTLE].flags |= CAMERA_FLAG_DISABLED;
+    gCameras[CAM_3].flags |= CAMERA_FLAG_DISABLED;
 
     if (gGameStatusPtr->creditsViewportMode == -1) {
 #if DX_FULL_VIEWPORT

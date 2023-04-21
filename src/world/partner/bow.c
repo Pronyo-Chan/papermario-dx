@@ -17,7 +17,7 @@ s32 N(check_for_treadmill_overlaps)(void);
 
 void N(init)(Npc* bow) {
     bow->collisionHeight = 26;
-    bow->collisionRadius = 24;
+    bow->collisionDiameter = 24;
     bow->renderMode = RENDER_MODE_SURFACE_XLU_LAYER1;
     N(LockingPlayerInput) = FALSE;
     N(IsHiding) = FALSE;
@@ -281,7 +281,7 @@ API_CALLABLE(N(UseAbility)) {
                 bow->duration--;
                 if (bow->duration == 0) {
                     bow->yaw = playerStatus->targetYaw;
-                    func_8003D624(bow, FOLD_TYPE_7, playerStatus->alpha1, 0, 0, 0, 0);
+                    npc_set_imgfx_params(bow, IMGFX_SET_ALPHA, playerStatus->alpha1, 0, 0, 0, 0);
                     suggest_player_anim_always_forward(ANIM_Mario1_Crouch);
                     sfx_play_sound_at_npc(SOUND_BOW_VANISH, SOUND_SPACE_MODE_0, NPC_PARTNER);
                     script->USE_STATE = OUTTA_SIGHT_VANISH;
@@ -303,7 +303,7 @@ API_CALLABLE(N(UseAbility)) {
                 }
 
                 get_shadow_by_index(bow->shadowIndex)->alpha = playerStatus->alpha1 >> 1;
-                func_8003D624(bow, FOLD_TYPE_7, playerStatus->alpha1, 0, 0, 0, 0);
+                npc_set_imgfx_params(bow, IMGFX_SET_ALPHA, playerStatus->alpha1, 0, 0, 0, 0);
                 bow->pos.x = playerStatus->position.x - N(OuttaSightPosX);
                 bow->pos.y = playerStatus->position.y - N(OuttaSightPosY);
                 bow->pos.z = playerStatus->position.z - N(OuttaSightPosZ);
@@ -367,7 +367,7 @@ void N(end_outta_sight_cleanup)(Npc* bow) {
     s32 actionState;
 
     playerStatus->alpha1 = 255;
-    func_8003D624(bow, FOLD_TYPE_NONE, 0, 0, 0, 0, 0);
+    npc_set_imgfx_params(bow, IMGFX_CLEAR, 0, 0, 0, 0, 0);
     bow->renderMode = RENDER_MODE_SURFACE_XLU_LAYER1;
     get_shadow_by_index(bow->shadowIndex)->alpha = playerStatus->alpha1 / 2;
 

@@ -135,46 +135,45 @@ EvtScript N(init) = {
 #include "battle/area/sam2/actor/img.png.inc.c"
 #include "battle/area/sam2/actor/img.pal.inc.c"
 
-FoldImageRecPart D_8021A2B8_63F498 = {
+ImgFXOverlayTexture N(MonstarDetailTexture) = {
     .raster = battle_area_sam2_actor_img_png,
     .palette = battle_area_sam2_actor_img_pal,
     .width = battle_area_sam2_actor_img_png_width,
     .height = battle_area_sam2_actor_img_png_height,
-    .xOffset = -1,
-    .yOffset = -4,
-    .opacity = 0,
-    .dlist = N(dlist),
+    .offsetX = -4,
+    .offsetY = 0,
+    .displayList = N(dlist),
 };
 
 API_CALLABLE(func_80218000_63D1E0) {
     ActorPart* part = get_actor_part(get_actor(script->owner1.actorID), 1);
     s32 i;
-    u8 sp20[20];
-    u8 sp38[20];
-    u8 sp50[20];
-    u8 sp68[20];
+    u8 colR[20];
+    u8 colG[20];
+    u8 colB[20];
+    u8 colA[20];
 
     if (isInitialCall) {
         script->functionTemp[1] = 0;
         script->functionTemp[2] = 0;
         script->functionTemp[0] = 0;
-        func_802DE780(part->spriteInstanceID, 0, FOLD_TYPE_11, 20, 0, 0, 255, 0);
+        set_npc_imgfx_comp(part->spriteInstanceID, 0, IMGFX_ALLOC_COLOR_BUF, 20, 0, 0, 255, 0);
     }
 
-    func_802DE780(part->spriteInstanceID, 1, FOLD_TYPE_F, (s32)&D_8021A2B8_63F498, 255, 0, 255, 0);
+    set_npc_imgfx_comp(part->spriteInstanceID, 1, IMGFX_OVERLAY, (s32)&N(MonstarDetailTexture), 255, 0, 255, 0);
     script->functionTemp[1] += 10;
     if (script->functionTemp[1] >= 360) {
         script->functionTemp[1] %= 360;
     }
 
     for (i = 0; i < 20; i++) {
-        sp20[i] = (cosine(script->functionTemp[1] + i * 25) + 1.0) * 56.0;
-        sp38[i] = (cosine(script->functionTemp[1] + i * 25 + 45) + 1.0) * 56.0;
-        sp50[i] = (cosine(script->functionTemp[1] + i * 25 + 90) + 1.0) * 56.0;
+        colR[i] = (cosine(script->functionTemp[1] + i * 25) + 1.0) * 56.0;
+        colG[i] = (cosine(script->functionTemp[1] + i * 25 + 45) + 1.0) * 56.0;
+        colB[i] = (cosine(script->functionTemp[1] + i * 25 + 90) + 1.0) * 56.0;
     }
 
     for (i = 0; i < 20; i++) {
-        func_802DE780(part->spriteInstanceID, 0, FOLD_TYPE_C, i, sp20[i] << 0x18 | sp38[i] << 0x10 | sp50[i] << 8 | 0xFF, 0, 255, 0);
+        set_npc_imgfx_comp(part->spriteInstanceID, 0, IMGFX_COLOR_BUF_SET_MODULATE, i, colR[i] << 0x18 | colG[i] << 0x10 | colB[i] << 8 | 255, 0, 255, 0);
     }
 
     return ApiStatus_BLOCK;
