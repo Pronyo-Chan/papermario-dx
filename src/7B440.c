@@ -101,6 +101,9 @@ void reset_player_status(void) {
     playerStatus->flipYaw[CAM_BATTLE] = 0.0f;
     playerStatus->flipYaw[CAM_TATTLE] = 0.0f;
     playerStatus->flipYaw[CAM_3] = 0.0f;
+    playerStatus->newVar1 = 1;
+    playerStatus->newVar2 = 2;
+    playerStatus->newVar3 = 3;
 
     mapSettings = gAreas[gGameStatusPtr->areaID].maps[gGameStatusPtr->mapID].settings;
 

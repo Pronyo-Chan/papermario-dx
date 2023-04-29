@@ -2030,6 +2030,9 @@ typedef struct PlayerStatus {
     /* 0x1BC */ char unk_1BC[196];
     /* 0x280 */ s8 poundImpactDelay; // governs period of immobility after landing a ground pound
     /* 0x281 */ char unk_281[7];
+                s32 newVar1;
+                s32 newVar2;
+                s32 newVar3;
 } PlayerStatus; // size = 0x288
 
 typedef struct SaveDataHeader {
