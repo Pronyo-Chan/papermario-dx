@@ -5,7 +5,14 @@ extern EvtScript N(EVS_OnTouch_DrainSwitch);
 EvtScript N(EVS_SetupSwitch) = {
     EVT_CALL(ParentColliderToModel, COLLIDER_o1989, MODEL_o1992)
     EVT_CALL(ParentColliderToModel, COLLIDER_o1990, MODEL_o1992)
+    EVT_SET(LVar0, 0)
     EVT_IF_EQ(AF_ISK03_SandSwitchActivated, FALSE)
+        EVT_ADD(LVar0, 1)
+    EVT_END_IF
+    EVT_IF_GE(GB_StoryProgress, STORY_CH2_DRAINED_FIRST_SAND_ROOM)
+        EVT_ADD(LVar0, 1)
+    EVT_END_IF
+    EVT_IF_EQ(LVar0, 0)
         EVT_BIND_TRIGGER(EVT_PTR(N(EVS_OnTouch_DrainSwitch)), TRIGGER_FLOOR_TOUCH, COLLIDER_o1990, 1, 0)
     EVT_ELSE
         EVT_CALL(TranslateGroup, MODEL_g319, 0, -14, 0)
@@ -24,7 +31,7 @@ EvtScript N(EVS_OnTouch_DrainSwitch) = {
     EVT_CALL(DisablePlayerInput, TRUE)
     EVT_LABEL(5)
         EVT_WAIT(1)
-        EVT_CALL(PartnerCanUseAbility, LVar0)
+        /*EVT_CALL(PartnerCanUseAbility, LVar0)
         EVT_IF_EQ(LVar0, TRUE)
             EVT_GOTO(5)
         EVT_END_IF
@@ -37,7 +44,7 @@ EvtScript N(EVS_OnTouch_DrainSwitch) = {
             EVT_WAIT(10)
             EVT_CALL(EnablePartnerAI)
         EVT_END_THREAD
-    EVT_END_IF
+    EVT_END_IF*/
     EVT_CALL(PlaySoundAtCollider, COLLIDER_o1990, SOUND_208A, SOUND_SPACE_MODE_0)
     EVT_CALL(MakeLerp, 0, -14, 30, EASING_LINEAR)
     EVT_LABEL(10)

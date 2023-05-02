@@ -66,7 +66,7 @@ void action_update_use_tweester(void) {
             break;
         case SUBSTATE_DONE:
             disable_player_shadow();
-            disable_npc_shadow(wPartnerNpc);
+            //disable_npc_shadow(wPartnerNpc);
             playerStatus->blinkTimer = 50;
             enable_player_static_collisions();
             enable_player_input();

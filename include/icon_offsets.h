@@ -1231,5 +1231,11 @@
 
 #define ICON_key_fireball_raster 0x2D460
 #define ICON_key_fireball_palette 0x2D580
+
 #define ICON_key_pwing_raster 0x2D5A0
 #define ICON_key_pwing_palette 0x2D6C0
+
+#define ICON_badge_SlowGhost_raster 0x2D6E0
+#define ICON_badge_SlowGhost_palette 0x2D810
+#define ICON_badge_SlowGhost_disabled_raster 0x2D6E0
+#define ICON_badge_SlowGhost_disabled_palette 0x2D810

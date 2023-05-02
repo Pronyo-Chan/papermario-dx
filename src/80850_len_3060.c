@@ -240,6 +240,31 @@ s32 add_badge(s32 itemID) {
     return i;
 }
 
+s32 equip_badge(s32 itemID) {
+    PlayerData* playerData = &gPlayerData;
+    ItemData* item = &gItemTable[itemID];
+    s32 i;
+
+    for (i = 0; i < ARRAY_COUNT(playerData->equippedBadges); i++) {
+        if (playerData->equippedBadges[i] == itemID) {
+            return 0;
+        }
+    }
+
+    for (i = 0; i < ARRAY_COUNT(playerData->equippedBadges); i++) {
+        if (playerData->equippedBadges[i] == ITEM_NONE) {
+            break;
+        }
+    }
+
+    if (i >= ARRAY_COUNT(playerData->equippedBadges)) {
+        return 0;
+    }
+
+    playerData->equippedBadges[i] = itemID;
+    return 1;
+}
+
 s32 store_item(s32 itemID) {
     PlayerData* playerData = &gPlayerData;
     s32 i;
@@ -1836,6 +1861,11 @@ s32 is_ability_active(s32 ability) {
                 break;
             case ABILITY_HEALTHY_HEALTHY:
                 if (badgeMoveID == MOVE_HEALTHY_HEALTHY) {
+                    ret++;
+                }
+                break;
+             case ABILITY_SLOW_GHOST:
+                if (badgeMoveID == MOVE_SLOW_GHOST) {
                     ret++;
                 }
                 break;

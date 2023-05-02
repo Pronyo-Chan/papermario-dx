@@ -926,6 +926,7 @@ s32 should_collider_allow_interact(s32);
 void show_coin_counter(void);
 s32 add_item(s32 itemID);
 s32 add_badge(s32 itemID);
+s32 equip_badge(s32 itemID);
 void hide_coin_counter_immediately(void);
 void hide_popup_menu(void);
 void destroy_popup_menu(void);

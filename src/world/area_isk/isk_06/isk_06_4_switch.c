@@ -24,7 +24,7 @@ EvtScript N(EVS_OnTouch_DrainSwitch) = {
     EVT_CALL(DisablePlayerInput, TRUE)
     EVT_LABEL(5)
         EVT_WAIT(1)
-        EVT_CALL(PartnerCanUseAbility, LVar0)
+        /*EVT_CALL(PartnerCanUseAbility, LVar0)
         EVT_IF_EQ(LVar0, TRUE)
             EVT_GOTO(5)
         EVT_END_IF
@@ -37,7 +37,7 @@ EvtScript N(EVS_OnTouch_DrainSwitch) = {
             EVT_WAIT(10)
             EVT_CALL(EnablePartnerAI)
         EVT_END_THREAD
-    EVT_END_IF
+    EVT_END_IF*/
     EVT_CALL(PlaySoundAtCollider, COLLIDER_o2091, SOUND_208A, SOUND_SPACE_MODE_0)
     EVT_CALL(MakeLerp, 0, -14, 30, EASING_LINEAR)
     EVT_LABEL(10)

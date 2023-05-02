@@ -34,11 +34,6 @@ void clear_trigger_data(void) {
     collisionStatus->bombetteExplosionPos.x = 0.0f;
     collisionStatus->bombetteExplosionPos.y = 0.0f;
     collisionStatus->bombetteExplosionPos.z = 0.0f;
-
-    collisionStatus->hammerHit = -1;
-    collisionStatus->hammerHitPos.x = 0.0f;
-    collisionStatus->hammerHitPos.y = 0.0f;
-    collisionStatus->hammerHitPos.z = 0.0f;
 }
 
 void init_trigger_list(void) {
@@ -193,25 +188,21 @@ void update_triggers(void) {
             Vec4f* triggerPos;
             f32 dist;
 
+            if (collisionStatus->bombetteExploded < 0) {
+                continue;
+            }
 
             triggerPos = listTrigger->location.pos;
-            if (collisionStatus->bombetteExploded >= 0) {
-                dist = dist3D(triggerPos->x, triggerPos->y, triggerPos->z,
-                                    collisionStatus->bombetteExplosionPos.x, collisionStatus->bombetteExplosionPos.y,
-                                    collisionStatus->bombetteExplosionPos.z);
+            dist = dist3D(triggerPos->x, triggerPos->y, triggerPos->z,
+                                collisionStatus->bombetteExplosionPos.x, collisionStatus->bombetteExplosionPos.y,
+                                collisionStatus->bombetteExplosionPos.z);
+            collisionStatus->bombetteExploded = -1;
+            collisionStatus->bombetteExplosionPos.x = 0.0f;
+            collisionStatus->bombetteExplosionPos.y = 0.0f;
+            collisionStatus->bombetteExplosionPos.z = 0.0f;
 
-                if ((triggerPos->yaw * 0.5f) + 50.0f < dist) {
-                    continue;
-                }
-            }
-            if (collisionStatus->hammerHit >= 0) {
-                dist = dist3D(triggerPos->x, triggerPos->y, triggerPos->z,
-                                    collisionStatus->hammerHitPos.x, collisionStatus->hammerHitPos.y,
-                                    collisionStatus->hammerHitPos.z);
-
-                if ((triggerPos->yaw * 0.5f) + 30.0f < dist) {
-                    continue;
-                }
+            if ((triggerPos->yaw * 0.5f) + 30.0f < dist) {
+                continue;
             }
         }
 

@@ -814,7 +814,7 @@ EvtScript N(8021E008) = {
                         EVT_END_IF
                     EVT_END_THREAD
                     EVT_WAIT(25)
-                    EVT_CALL(SetTargetActor, ACTOR_SELF, ACTOR_PARTNER)
+                    /*EVT_CALL(SetTargetActor, ACTOR_SELF, ACTOR_PARTNER)
                     EVT_CALL(SetGoalToTarget, ACTOR_SELF)
                     EVT_CALL(GetGoalPos, ACTOR_SELF, LVar4, LVar5, LVar6)
                     EVT_SUB(LVar4, 5)
@@ -832,7 +832,7 @@ EvtScript N(8021E008) = {
                     EVT_CALL(SetGoalToTarget, ACTOR_SELF)
                     EVT_CALL(EnemyDamageTarget, ACTOR_SELF, LVar0, DAMAGE_TYPE_NO_CONTACT, 0, 0, 2, BS_FLAGS1_SP_EVT_ACTIVE)
                     EVT_WAIT(20)
-                    EVT_CALL(SetPartFlagBits, ACTOR_SELF, 7, ACTOR_PART_FLAG_INVISIBLE, TRUE)
+                    EVT_CALL(SetPartFlagBits, ACTOR_SELF, 7, ACTOR_PART_FLAG_INVISIBLE, TRUE)*/
                     EVT_CALL(func_8026BF48, 0)
                     EVT_RETURN
             EVT_END_SWITCH
@@ -854,7 +854,7 @@ EvtScript N(8021E008) = {
     EVT_END_THREAD
     EVT_CALL(func_8026BF48, 1)
     EVT_THREAD
-        EVT_WAIT(25)
+        /*EVT_WAIT(25)
         EVT_CALL(SetTargetActor, ACTOR_SELF, ACTOR_PARTNER)
         EVT_CALL(SetGoalToTarget, ACTOR_SELF)
         EVT_CALL(GetGoalPos, ACTOR_SELF, LVar4, LVar5, LVar6)
@@ -872,7 +872,7 @@ EvtScript N(8021E008) = {
         EVT_CALL(SetTargetActor, ACTOR_SELF, ACTOR_PARTNER)
         EVT_CALL(EnemyDamageTarget, ACTOR_SELF, LVar0, DAMAGE_TYPE_NO_CONTACT, 0, 0, 2, BS_FLAGS1_SP_EVT_ACTIVE)
         EVT_WAIT(20)
-        EVT_CALL(SetPartFlagBits, ACTOR_SELF, 7, ACTOR_PART_FLAG_INVISIBLE, TRUE)
+        EVT_CALL(SetPartFlagBits, ACTOR_SELF, 7, ACTOR_PART_FLAG_INVISIBLE, TRUE)*/
         EVT_CALL(func_8026BF48, 0)
     EVT_END_THREAD
     EVT_CALL(PlaySound, SOUND_20EB)

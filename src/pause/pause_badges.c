@@ -761,7 +761,7 @@ void pause_badges_load_badges(s32 onlyEquipped) {
 
             if (badgeItemID == 0) {
                 continue;
-            } else if (badgeItemID > ITEM_LAST_BADGE) {
+            } else if (badgeItemID > ITEM_LAST_BADGE && badgeItemID != ITEM_SLOW_GHOST) {
                 break;
             } else {
                 gPauseBadgesItemIds[numItems] = badgeItemID;

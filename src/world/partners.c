@@ -2384,7 +2384,7 @@ void enable_partner_ai(void) {
     PlayerData* playerData = &gPlayerData;
     wPartnerFollowState = 0;
 
-    if(playerData->currentPartner != PARTNER_TWINK) {
+    if(playerData->currentPartner != PARTNER_TWINK && playerData->currentPartner != PARTNER_GOOMPA) {
         return;
     }
 

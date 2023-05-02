@@ -267,6 +267,7 @@ ApiStatus DropResizableItemEntity(Evt* script, s32 isInitialCall);
 ApiStatus RemoveItemEntity(Evt* script, s32 isInitialCall);
 ApiStatus AddBadge(Evt* script, s32 isInitialCall);
 ApiStatus RemoveBadge(Evt* script, s32 isInitialCall);
+ApiStatus EquipBadge(Evt* script, s32 isInitialCall);
 ApiStatus SetItemPos(Evt* script, s32 isInitialCall);
 ApiStatus SetItemFlags(Evt* script, s32 isInitialCall);
 ApiStatus SetItemAlpha(Evt* script, s32 isInitialCall);

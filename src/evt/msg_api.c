@@ -54,7 +54,7 @@ s32 _show_message(Evt* script, s32 isInitialCall, s32 mode) {
     if (isInitialCall) {
         D_802DB264 = 0;
         speakerNpcID = evt_get_variable(script, *args++);
-        if (speakerNpcID == NPC_PARTNER && playerData->currentPartner != PARTNER_TWINK)  {
+        if (speakerNpcID == NPC_PARTNER && playerData->currentPartner != PARTNER_TWINK && playerData->currentPartner != PARTNER_GOOMPA)  {
             return TRUE;
         }
         script->varTable[13] = evt_get_variable(script, *args++);

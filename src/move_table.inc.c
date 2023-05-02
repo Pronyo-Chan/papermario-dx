@@ -1087,7 +1087,7 @@ MoveData gMoveTable[] = {
     .category = MOVE_TYPE_NONE,
     .actionTip = MOVE_ACTION_TIP_NONE,
     .costFP = 0,
-    .costBP = 1
+    .costBP = 0
 },
 {   // move 6D: SpeedySpin
     .nameMsg = MSG_MoveName_SpeedySpin,
@@ -1097,7 +1097,7 @@ MoveData gMoveTable[] = {
     .category = MOVE_TYPE_NONE,
     .actionTip = MOVE_ACTION_TIP_NONE,
     .costFP = 0,
-    .costBP = 1
+    .costBP = 0
 },
 {   // move 6E: Refund
     .nameMsg = MSG_ItemName_Refund,
@@ -1187,7 +1187,7 @@ MoveData gMoveTable[] = {
     .category = MOVE_TYPE_NONE,
     .actionTip = MOVE_ACTION_TIP_NONE,
     .costFP = 0,
-    .costBP = 3
+    .costBP = 0
 },
 {   // move 77: Focus
     .nameMsg = MSG_Menus_StarPower_Focus,
@@ -1847,6 +1847,16 @@ MoveData gMoveTable[] = {
     .category = MOVE_TYPE_PARTNER,
     .actionTip = MOVE_ACTION_TIP_4,
     .costFP = 5,
+    .costBP = 0
+},
+{   // move B9: SlowGhost
+    .nameMsg = MSG_ItemName_SlowGhost,
+    .fullDescMsg = MSG_ItemFullDesc_SlowGhost,
+    .shortDescMsg = MSG_ItemShortDesc_SlowGhost,
+    .flags = 0,
+    .category = MOVE_TYPE_9,
+    .actionTip = MOVE_ACTION_TIP_NONE,
+    .costFP = 0,
     .costBP = 0
 },
 };

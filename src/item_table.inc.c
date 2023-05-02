@@ -4756,7 +4756,7 @@ ItemData gItemTable[] = {
     .fullDescMsg = MSG_ItemFullDesc_Fireball,
     .shortDescMsg = MSG_ItemShortDesc_Fireball,
     .sellValue = -1,
-    .hudElemID = ITEM_HS_INDEX(HES_Item_FireShield),
+    .hudElemID = ITEM_HS_INDEX(HES_Item_FireShield), //TODO: Custom icon
     .sortValue = 0,
     .targetFlags = TARGET_FLAG_PLAYER,
     .typeFlags = ITEM_TYPE_FLAG_KEY | ITEM_TYPE_FLAG_ENTITY_FULLSIZE,
@@ -4769,12 +4769,26 @@ ItemData gItemTable[] = {
     .fullDescMsg = MSG_ItemFullDesc_PWing,
     .shortDescMsg = MSG_ItemShortDesc_PWing,
     .sellValue = -1,
-    .hudElemID = ITEM_HS_INDEX(HES_Item_AutoJump),
+    .hudElemID = ITEM_HS_INDEX(HES_Item_AutoJump), //TODO: Custom icon
     .sortValue = 0,
     .targetFlags = TARGET_FLAG_PLAYER,
     .typeFlags = ITEM_TYPE_FLAG_KEY | ITEM_TYPE_FLAG_ENTITY_FULLSIZE,
     .moveID = MOVE_NONE,
     .potencyA = 0,
     .potencyB = 0
-}
+},
+{   // item 16F: SlowGhost
+    .nameMsg = MSG_ItemName_SlowGhost,
+    .fullDescMsg = MSG_ItemFullDesc_SlowGhost,
+    .shortDescMsg = MSG_ItemShortDesc_SlowGhost,
+    .sellValue = 10,
+    .hudElemID = ITEM_HS_INDEX(HES_Item_BooPortrait), //TODO: Custom icon
+    .sortValue = 111,
+    .targetFlags = 0,
+    .typeFlags = ITEM_TYPE_FLAG_BADGE | ITEM_TYPE_FLAG_ENTITY_FULLSIZE,
+    .moveID = MOVE_SLOW_GHOST,
+    .potencyA = 0,
+    .potencyB = 0
+},
+
 };

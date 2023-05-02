@@ -12,9 +12,9 @@ extern CollisionStatus gCollisionStatus;
 extern GameStatus gGameStatus;
 extern GameStatus* gGameStatusPtr;
 extern s32 gRandSeed;
-extern ItemData gItemTable[367];
+extern ItemData gItemTable[368];
 extern UNK_FUN_PTR(gCurrentUpdateFunction);
-extern MoveData gMoveTable[185];
+extern MoveData gMoveTable[186];
 
 extern s32 gBattleState;
 extern BattleStatus gBattleStatus;

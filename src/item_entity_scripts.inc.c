@@ -489,6 +489,8 @@ ItemScript IES_Fireball = STANDARD_ITEM_SCRIPT(key_fireball);
 
 ItemScript IES_PWing = STANDARD_ITEM_SCRIPT(key_pwing);
 
+ItemScript IES_SlowGhost = STANDARD_ITEM_SCRIPT(badge_SlowGhost);
+
 ItemScript IES_Heart = {
     is_SetIcon(10, anim_heart_0)
     is_SetIcon(6, anim_heart_1)
@@ -1527,7 +1529,10 @@ s32 gItemIconRasterOffsets[] = {
     ICON_anim_sp_0_raster,
     ICON_anim_hp_0_raster,
     ICON_anim_fp_0_raster,
-    ICON_anim_star_piece_0_raster
+    ICON_anim_star_piece_0_raster,
+    ICON_key_fireball_raster,
+    ICON_key_pwing_raster,
+    ICON_badge_SlowGhost_raster,
 };
 
 /* indexed by itemID */
@@ -1882,8 +1887,7 @@ s32 gItemIconPaletteOffsets[] = {
     ICON_anim_fp_0_palette,
     ICON_anim_star_piece_0_palette,
 
-    ICON_key_fireball_raster,
     ICON_key_fireball_palette,
-    ICON_key_pwing_raster,
     ICON_key_pwing_palette,
+    ICON_badge_SlowGhost_palette,
 };

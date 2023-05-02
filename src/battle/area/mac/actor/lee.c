@@ -133,7 +133,7 @@ EvtScript N(init_8021D4C8) = {
     EVT_CALL(SetActorVar, ACTOR_SELF, 0, 0)
     EVT_THREAD
         EVT_CALL(func_8026BF48, 1)
-        EVT_EXEC_WAIT(N(copyPartner))
+        //EVT_EXEC_WAIT(N(copyPartner))
         EVT_CALL(func_8026BF48, 0)
     EVT_END_THREAD
     EVT_CALL(func_802180D0_464560)
@@ -4277,15 +4277,15 @@ EvtScript N(copyPartner) = {
 
 EvtScript N(takeTurn_80229F9C) = {
     EVT_CALL(GetActorVar, ACTOR_SELF, 8, LVar0)
-    EVT_SWITCH(LVar0)
-        EVT_CASE_EQ(0)
-            EVT_EXEC_WAIT(N(copyPartner))
-        EVT_CASE_EQ(1)
-        EVT_CASE_EQ(2)
+    //EVT_SWITCH(LVar0)
+        //EVT_CASE_EQ(0)
+            //EVT_EXEC_WAIT(N(copyPartner))
+        //EVT_CASE_EQ(1)
+        //EVT_CASE_EQ(2)
             EVT_EXEC_WAIT(N(flyingTackle))
-        EVT_CASE_EQ(3)
-            EVT_CALL(SetActorVar, ACTOR_SELF, 8, 2)
-    EVT_END_SWITCH
+        //EVT_CASE_EQ(3)
+            //EVT_CALL(SetActorVar, ACTOR_SELF, 8, 2)
+    //EVT_END_SWITCH
     EVT_RETURN
     EVT_END
 };

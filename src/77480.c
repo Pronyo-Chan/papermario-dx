@@ -624,6 +624,15 @@ void update_player(void) {
         }
     }
 
+    if(is_ability_active(ABILITY_SLOW_GHOST)) {
+        playerStatus->flags |= PS_FLAG_HAZARD_INVINCIBILITY;
+        playerStatus->alpha1 = 200;
+    }
+    else {
+        playerStatus->flags &= ~PS_FLAG_HAZARD_INVINCIBILITY;
+        playerStatus->alpha1 = 255;
+    }
+
     collisionStatus->currentWall = NO_COLLIDER;
     collisionStatus->lastWallHammered = NO_COLLIDER;
     collisionStatus->currentInspect = NO_COLLIDER;

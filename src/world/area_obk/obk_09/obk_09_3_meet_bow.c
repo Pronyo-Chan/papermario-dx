@@ -1,5 +1,6 @@
 #include "obk_09.h"
 #include "sprite.h"
+#include "world/common/complete/GiveReward.inc.c"
 
 #include "world/common/util/ChangeNpcToPartner.inc.c"
 
@@ -153,12 +154,12 @@ EvtScript N(EVS_Scene_MeetBow) = {
         EVT_CALL(StopSound, SOUND_8000000F)
         EVT_CALL(EnableGroup, MODEL_ori, FALSE)
     EVT_END_THREAD
-    EVT_CALL(SpeakToPlayer, NPC_Bow, ANIM_WorldBow_Talk, ANIM_WorldBow_Idle, 0, MSG_CH3_004D)
-    EVT_CALL(SpeakToPlayer, NPC_Bootler, ANIM_Bootler_Panic, ANIM_Bootler_Shock, 0, MSG_CH3_004E)
+    EVT_CALL(SpeakToPlayer, NPC_Bow, ANIM_WorldBow_Talk, ANIM_WorldBow_Idle, 0, MSG_NPC_BowGoodDeal)
+    /*EVT_CALL(SpeakToPlayer, NPC_Bootler, ANIM_Bootler_Panic, ANIM_Bootler_Shock, 0, MSG_CH3_004E)
     EVT_CALL(SpeakToNpc, NPC_Bow, ANIM_WorldBow_Talk, ANIM_WorldBow_Idle, 0, NPC_Bootler, MSG_CH3_004F)
     EVT_CALL(SpeakToPlayer, NPC_Bootler, ANIM_Bootler_Flail, ANIM_Bootler_Quaver, 0, MSG_CH3_0050)
     EVT_CALL(SpeakToPlayer, NPC_Bow, ANIM_WorldBow_SpookLoop, ANIM_WorldBow_Idle, 0, MSG_CH3_0051)
-    EVT_CALL(SpeakToPlayer, NPC_Bootler, ANIM_Bootler_Dejected, ANIM_Bootler_Quaver, 0, MSG_CH3_0052)
+    EVT_CALL(SpeakToPlayer, NPC_Bootler, ANIM_Bootler_Dejected, ANIM_Bootler_Quaver, 0, MSG_CH3_0052)*/
     EVT_CALL(SetCamSpeed, CAM_DEFAULT, EVT_FLOAT(2.0 / DT))
     EVT_CALL(GetPlayerPos, LVar0, LVar1, LVar2)
     EVT_CALL(UseSettingsFrom, CAM_DEFAULT, LVar0, LVar1, LVar2)
@@ -171,8 +172,10 @@ EvtScript N(EVS_Scene_MeetBow) = {
     EVT_SUB(LVar1, 40)
     EVT_ADD(LVar2, 150)
     EVT_CALL(NpcJump0, NPC_Bow, LVar0, LVar1, LVar2, 25 * DT)
-    EVT_CALL(SpeakToPlayer, NPC_Bow, ANIM_WorldBow_Talk, ANIM_WorldBow_Idle, 0, MSG_CH3_0053)
-    EVT_CALL(N(ChangeNpcToPartner), 0, 9)
+    EVT_CALL(SpeakToPlayer, NPC_Bow, ANIM_WorldBow_Talk, ANIM_WorldBow_Idle, 0, MSG_NPC_Bow_TakeThisBadge)
+    EVT_WAIT(10*DT)
+    EVT_GIVE_BADGE_REWARD(ITEM_SLOW_GHOST)
+   /* EVT_CALL(N(ChangeNpcToPartner), 0, 9)
     EVT_CALL(N(LoadPartyImage))
     EVT_EXEC(N(EVS_PlayNewPartnerSong))
     EVT_WAIT(15 * DT)
@@ -182,7 +185,7 @@ EvtScript N(EVS_Scene_MeetBow) = {
     EVT_WAIT(10 * DT)
     EVT_CALL(DisablePartnerAI, 0)
     EVT_CALL(SpeakToPlayer, NPC_PARTNER, ANIM_WorldBow_Celebrate, ANIM_WorldBow_Celebrate, 0, MSG_CH3_0054)
-    EVT_CALL(EnablePartnerAI)
+    EVT_CALL(EnablePartnerAI)*/
     EVT_CALL(DisablePlayerInput, FALSE)
     EVT_RETURN
     EVT_END

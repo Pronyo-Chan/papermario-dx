@@ -999,7 +999,7 @@ Npc* get_npc_unsafe(s32 npcID) {
     Npc* npc;
     PlayerData* playerData = &gPlayerData;
 
-    if (npcID == NPC_PARTNER && playerData->currentPartner != PARTNER_TWINK) {
+    if (npcID == NPC_PARTNER && playerData->currentPartner != PARTNER_TWINK && playerData->currentPartner != PARTNER_GOOMPA) {
         return NULL;
     }
 

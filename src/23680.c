@@ -427,6 +427,10 @@ s32 basic_ai_check_player_dist(EnemyDetectVolume* territory, Enemy* enemy, f32 r
     }
 
     partnerStatus = &gPartnerStatus;
+    if (playerStatus->flags & PS_FLAG_HAZARD_INVINCIBILITY && !(territory->detectFlags & AI_TERRITORY_IGNORE_HIDING)) {
+        return FALSE;
+    }
+
     if (partnerStatus->actingPartner == PARTNER_BOW && partnerStatus->partnerActionState
             && !(territory->detectFlags & AI_TERRITORY_IGNORE_HIDING)) {
         return FALSE;

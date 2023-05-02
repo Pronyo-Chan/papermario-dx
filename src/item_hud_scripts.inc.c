@@ -415,6 +415,9 @@ HudScript HES_Item_Fireball = STANDARD_ITEM_HUD_SCRIPT(key_fireball);
 
 HudScript HES_Item_PWing = STANDARD_ITEM_HUD_SCRIPT(key_pwing);
 
+HudScript HES_Item_SlowGhost = STANDARD_ITEM_HUD_SCRIPT(badge_SlowGhost);
+HudScript HES_Item_SlowGhost_disabled = STANDARD_ITEM_HUD_SCRIPT(badge_SlowGhost_disabled);
+
 HudScript HES_Item_Unused_08D = STANDARD_ITEM_HUD_SCRIPT(unused_08D);
 HudScript HES_Item_Unused_08D_disabled = STANDARD_ITEM_HUD_SCRIPT(unused_08D_disabled);
 

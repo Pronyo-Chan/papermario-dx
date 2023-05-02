@@ -489,6 +489,7 @@ enum Abilities {
     ABILITY_GROUP_FOCUS             = 0x00000035,
     ABILITY_PEEKABOO                = 0x00000036,
     ABILITY_HEALTHY_HEALTHY         = 0x00000037,
+    ABILITY_SLOW_GHOST              = 0x00000038,
 };
 
 enum Emotes {
@@ -2124,6 +2125,7 @@ enum ItemIDs {
     ITEM_ITEMS_ICON                   = 0x0000016C,
     ITEM_FIREBALL                     = 0x0000016D,
     ITEM_PWING                        = 0x0000016E,
+    ITEM_SLOW_GHOST                   = 0x0000016F,
 };
 
 #define LOOKUP_ITEM(itemID) gItemTable[itemID & ~0xF0000]
@@ -2145,12 +2147,12 @@ enum ItemIDs {
 #define ITEM_LAST_BADGE             ITEM_ATTACK_FX_F5
 
 #define ITEM_FIRST_ADDED_KEY        ITEM_FIREBALL
-#define ITEM_FIRST_ADDED_KEY        ITEM_FIREBALL
+#define ITEM_LAST_ADDED_KEY         ITEM_PWING
 
 #define ITEM_NUM_KEYS (ITEM_LAST_KEY - ITEM_FIRST_KEY + 1)
 #define ITEM_NUM_CONSUMABLES (ITEM_LAST_CONSUMABLE - ITEM_FIRST_CONSUMABLE + 1)
-#define IS_ITEM(itemID) (itemID >= ITEM_FIRST_KEY && itemID <= ITEM_LAST_CONSUMABLE || itemID >= ITEM_FIRST_ADDED_KEY)
-#define IS_BADGE(itemID) (itemID >= ITEM_FIRST_BADGE && itemID <= ITEM_LAST_BADGE)
+#define IS_ITEM(itemID) (itemID >= ITEM_FIRST_KEY && itemID <= ITEM_LAST_CONSUMABLE || (itemID >= ITEM_FIRST_ADDED_KEY && itemID <= ITEM_LAST_ADDED_KEY))
+#define IS_BADGE(itemID) (itemID >= ITEM_FIRST_BADGE && itemID <= ITEM_LAST_BADGE || itemID == ITEM_SLOW_GHOST)
 
 // used for chest and give item events
 enum GotItemType {
@@ -4382,6 +4384,7 @@ enum MoveIDs {
     MOVE_OUTTA_SIGHT                = 0x000000B6,
     MOVE_SPOOK                      = 0x000000B7,
     MOVE_FAN_SMACK                  = 0x000000B8,
+    MOVE_SLOW_GHOST                 = 0x000000B9,
 };
 
 #define STAR_POWER_INDEX(x) (x - MOVE_FOCUS)

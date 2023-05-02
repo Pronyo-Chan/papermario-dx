@@ -708,6 +708,15 @@ ApiStatus RemoveBadge(Evt* script, s32 isInitialCall) {
     return ApiStatus_DONE2;
 }
 
+ApiStatus EquipBadge(Evt* script, s32 isInitialCall) {
+    Bytecode* args = script->ptrReadPos;
+    s32 badgeID = evt_get_variable(script, *args++);
+    Bytecode outBadgeIdx = *args++;
+
+    evt_set_variable(script, outBadgeIdx, equip_badge(badgeID));
+    return ApiStatus_DONE2;
+}
+
 ApiStatus SetItemPos(Evt* script, s32 isInitialCall) {
     Bytecode* args = script->ptrReadPos;
     ItemEntity* ptrItemEntity;

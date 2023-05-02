@@ -95,7 +95,7 @@ void action_update_walk(void) {
                 }
             }
 
-            if (!is_ability_active(ABILITY_SLOW_GO)) {
+            if (!is_ability_active(ABILITY_SLOW_GO) && !is_ability_active(ABILITY_SLOW_GHOST)) {
                 stickAxisX = playerStatus->stickAxis[0];
                 stickAxisY = playerStatus->stickAxis[1];
                 if (SQ(stickAxisX) + SQ(stickAxisY) > SQ(55)) {
@@ -190,7 +190,7 @@ void action_update_run(void) {
             }
         }
 
-        if (!is_ability_active(ABILITY_SLOW_GO)) {
+        if (!is_ability_active(ABILITY_SLOW_GO) && !is_ability_active(ABILITY_SLOW_GHOST)) {
             if (sqrtf(SQ(playerStatus->stickAxis[0]) + SQ(playerStatus->stickAxis[1])) <= 55.0f) {
                 set_action_state(ACTION_STATE_WALK);
                 return;
