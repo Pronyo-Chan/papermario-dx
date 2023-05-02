@@ -115,6 +115,7 @@ void action_hammer_play_hit_fx(s32 hitID) {
 
 s32 func_802B62A4_E25174(void) {
     PlayerStatus* playerStatus = &gPlayerStatus;
+    Entity* entity;
     f32 yaw;
     f32 angle;
     f32 outSinTheta;
@@ -210,8 +211,13 @@ s32 func_802B62A4_E25174(void) {
                 }
                 break;
             case ENTITY_TYPE_WOODEN_CRATE:
-            case ENTITY_TYPE_BOMBABLE_ROCK:
                 playerStatus->animFlags |= PA_FLAG_SHIVERING;
+                break;
+
+            case ENTITY_TYPE_BOMBABLE_ROCK:
+                entity = get_entity_by_index(ret);
+                entity->flags |= ENTITY_FLAG_PARTNER_COLLISION;
+                ret =-1;
                 break;
             case ENTITY_TYPE_BLUE_SWITCH:
             case ENTITY_TYPE_RED_SWITCH:
@@ -325,6 +331,10 @@ void func_802B6820_E256F0(void) {
         result = player_test_lateral_overlap(3, playerStatus, &x, &y, &z, 4.0f, yaw);
         if (HammerHit->unk_14 == 0) {
             collisionStatus->lastWallHammered = result;
+            collisionStatus->hammerHit = 0;
+            collisionStatus->hammerHitPos.x = x;
+            collisionStatus->hammerHitPos.y = y;
+            collisionStatus->hammerHitPos.z = z;
             if (result >= 0) {
                 if (result & COLLISION_WITH_ENTITY_BIT) {
                     get_entity_by_index(result)->collisionTimer = 0;
@@ -356,6 +366,10 @@ void func_802B6820_E256F0(void) {
             result = player_test_lateral_overlap(3, playerStatus, &x, &y, &z, 4.0f, yaw);
             if (HammerHit->unk_14 == 0) {
                 collisionStatus->lastWallHammered = result;
+                collisionStatus->bombetteExploded = 0;
+                collisionStatus->bombetteExplosionPos.x = x;
+                collisionStatus->bombetteExplosionPos.y = y;
+                collisionStatus->bombetteExplosionPos.z = z;
                 if (result >= 0) {
                     if (result & COLLISION_WITH_ENTITY_BIT) {
                         get_entity_by_index(result)->collisionTimer = 0;

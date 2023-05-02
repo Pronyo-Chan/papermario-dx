@@ -1645,6 +1645,8 @@ typedef struct CollisionStatus {
     /* 0x18 */ s16 bombetteExploded; /* 0 = yes, FFFF = no */
     /* 0x1A */ char unk_1A[2];
     /* 0x1C */ Vec3f bombetteExplosionPos;
+               s16 hammerHit;
+               Vec3f hammerHitPos;
 } CollisionStatus; // size = 0x28
 
 typedef struct DecorationUnk {

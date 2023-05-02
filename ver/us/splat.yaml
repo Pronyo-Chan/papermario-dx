@@ -28,7 +28,7 @@ options:
   ld_use_follows: False
 asset_stack:
   - star_rod_build
-  - dx
+  - custom
   - us
 segments:
   - name: header
