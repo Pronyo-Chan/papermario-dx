@@ -706,7 +706,7 @@ EvtScript N(EVS_Quizmo_MoveQuizmoToMicrophone) = {
 
 EvtScript N(EVS_Quizmo_SetCharacterPositons) = {
     EVT_EXEC(N(EVS_Quizmo_MovePlayerToPodium))
-    EVT_EXEC(N(EVS_Quizmo_MovePartnerToPodium))
+    //EVT_EXEC(N(EVS_Quizmo_MovePartnerToPodium))
     EVT_EXEC_WAIT(N(EVS_Quizmo_MoveQuizmoToMicrophone))
     EVT_RETURN
     EVT_END

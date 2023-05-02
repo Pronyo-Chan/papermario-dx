@@ -1,0 +1,19 @@
+**BUGS**
+
+* Air-dash *
+- Mario can pass through slopes (easy to reproduce in iwa)
+- Run speed sometimes does not get reset on Landing
+- Able to do do a frame perfect 2nd jump at end of dash
+- Able to cancel slide with Z
+- Run speed does not get reset on first strike
+
+* Fireball *
+- Initial pos is inverse in trd_06
+
+*General*
+- Fireball shows up as a present when given by Kooper
+- Kooper has no interact script after he gives the Fireball
+
+
+**IMPROVEMENTS**
+- Add custom text for Goombario not joining
