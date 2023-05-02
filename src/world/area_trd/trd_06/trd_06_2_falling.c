@@ -144,9 +144,9 @@ API_CALLABLE(N(EnableFallingAnimation)) {
 }
 
 API_CALLABLE(N(InitializeFallingPartner)) {
-    f32 partnerCollisionHeight = get_npc_unsafe(NPC_PARTNER)->collisionHeight;
+    //f32 partnerCollisionHeight = get_npc_unsafe(NPC_PARTNER)->collisionHeight;
 
-    script->varTable[0] = ((partnerCollisionHeight * 2) / 3.0f) + 145.0f;
+    //script->varTable[0] = ((partnerCollisionHeight * 2) / 3.0f) + 145.0f;
     return ApiStatus_DONE2;
 }
 
