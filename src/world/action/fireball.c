@@ -14,6 +14,20 @@ typedef struct FireballStatus{
 
 FireballStatus fireballStatus = {0,0};
 
+void fireball_hit_entity(void) {
+    Entity* entity;
+
+    fireballStatus.activeFireballTime = 30; // Kill fireball on next render
+
+    if (NpcHitQueryColliderID < 0 || !(NpcHitQueryColliderID & COLLISION_WITH_ENTITY_BIT)) {
+        return;
+    }
+
+    entity = get_entity_by_index(NpcHitQueryColliderID & ~COLLISION_WITH_ENTITY_BIT);
+    entity->flags |= ENTITY_FLAG_PARTNER_COLLISION;
+
+}
+
 void update_collision(Npc* fireballNpc) {
     f32 posX, posY, posZ;
     // check the forward collision for fireball
@@ -28,12 +42,15 @@ void update_collision(Npc* fireballNpc) {
         )
 
     if (TEST_COLLISION_AT_ANGLE(fireballNpc->yaw - 20.0f)) {
+        fireball_hit_entity();
     }
 
     if (TEST_COLLISION_AT_ANGLE(fireballNpc->yaw + 20.0f)) {
+        fireball_hit_entity();
     }
 
     if (TEST_COLLISION_AT_ANGLE(fireballNpc->yaw)) {
+        fireball_hit_entity();
     }
 
 }
@@ -78,7 +95,7 @@ void use_fireball(void){
 
     npcSettings.defaultAnim = ANIM_Fire_Brighest_Burn;
     npcSettings.height = 12;
-    npcSettings.radius = 20;
+    npcSettings.radius = 32;
 
     npcData.id = 69;
     npcData.init = (void*) 0x00004003;
@@ -105,7 +122,7 @@ void use_fireball(void){
     fireballNpc->collisionHeight = npcSettings.height;
     fireballNpc->unk_96 = 0;
     fireballNpc->planarFlyDist = 0.0f;
-    fireballNpc->flags = NPC_FLAG_IGNORE_PLAYER_COLLISION;
+    fireballNpc->flags = NPC_FLAG_IGNORE_PLAYER_COLLISION | NPC_FLAG_IGNORE_WORLD_COLLISION | NPC_FLAG_8;
 
     initialDistanceX = fireballStatus.facingLeft ? -25.0f : 25.0f;
 
