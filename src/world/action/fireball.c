@@ -120,6 +120,7 @@ void on_fireball_render(Npc* fireballNpc) {
         fireballNpc->rotation.z += 30.0f;
         update_collision(fireballNpc);
         npc_move_heading(fireballNpc, fireballNpc->moveSpeed, fireballNpc->yaw);
+        suggest_player_anim_always_forward(ANIM_Mario1_Throw);
     }
     else {
         free_npc_by_index(fireballStatus.activeFireballIndex);
@@ -128,6 +129,17 @@ void on_fireball_render(Npc* fireballNpc) {
         enable_player_input();
         suggest_player_anim_always_forward(ANIM_Mario1_Idle);
     }
+}
+
+s32 player_has_fireball(void) {
+    s32 i;
+    PlayerData* playerData = &gPlayerData;
+    for (i = 0; i < ARRAY_COUNT(playerData->keyItems); i++) {
+        if (playerData->keyItems[i] == ITEM_FIREBALL) {
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 void use_fireball(void){
@@ -140,6 +152,10 @@ void use_fireball(void){
     PlayerStatus* playerStatus = &gPlayerStatus;
 
     f32 playerPosX, playerPosY, playerPosZ, initialDistanceX, moveAngle;
+
+    if(!player_has_fireball()) {
+        return;
+    }
 
     if (fireballStatus.activeFireballIndex) {
         return;
@@ -198,7 +214,6 @@ void use_fireball(void){
     fireballNpc->rotationPivotOffsetY = 10.0f;
 
     sfx_play_sound_at_player(SOUND_E8, SOUND_SPACE_MODE_0);
-    suggest_player_anim_allow_backward(ANIM_Mario1_Throw);
 }
 
 
