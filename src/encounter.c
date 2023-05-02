@@ -7,6 +7,7 @@
 #include "world/partners.h"
 #include "sprite.h"
 #include "model.h"
+#include "world/action/fireball.h"
 
 #if !VERSION_JP && !VERSION_IQUE
 // TODO: remove this conditional when more of the JP rom has been processed
@@ -671,6 +672,14 @@ void update_encounters_neutral(void) {
                 if (!(enemy->flags & ENEMY_FLAG_IGNORE_PARTNER) && partner_test_enemy_collision(npc)) {
                     currentEncounter->hitType = ENCOUNTER_TRIGGER_PARTNER;
                     enemy->encountered = ENCOUNTER_TRIGGER_PARTNER;
+                    currentEncounter->currentEncounter = encounter;
+                    currentEncounter->currentEnemy = enemy;
+                    currentEncounter->firstStrikeType = FIRST_STRIKE_PLAYER;
+                    goto START_BATTLE;
+                }
+                else if (!(enemy->flags & ENEMY_FLAG_IGNORE_PARTNER) && test_fireball_first_strike(npc)) {
+                    currentEncounter->hitType = ENCOUNTER_TRIGGER_JUMP;
+                    enemy->encountered = ENCOUNTER_TRIGGER_JUMP;
                     currentEncounter->currentEncounter = encounter;
                     currentEncounter->currentEnemy = enemy;
                     currentEncounter->firstStrikeType = FIRST_STRIKE_PLAYER;

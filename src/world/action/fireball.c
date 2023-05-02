@@ -14,6 +14,65 @@ typedef struct FireballStatus{
 
 FireballStatus fireballStatus = {0,0};
 
+// This function seems overcomplicated but it's almost identical to kooper first strike test so I know it works
+s32 test_fireball_first_strike(Npc* enemy) {
+    f32 xTemp, yTemp, zTemp;
+    f32 enemyX, enemyY, enemyZ;
+    f32 fireballX, fireballY, fireballZ;
+    f32 enemyCollHeight;
+    f32 fireballCollHeight;
+    f32 enemyCollRadius;
+    f32 fireballCollRadius;
+    f32 angleToEnemy;
+    f32 distToEnemy;
+
+    Npc* fireball = get_npc_by_index(fireballStatus.activeFireballIndex);
+
+    enemyX = enemy->pos.x;
+    enemyY = enemy->pos.y;
+    enemyZ = enemy->pos.z;
+
+    fireballX = fireball->pos.x;
+    fireballY = fireball->pos.y;
+    fireballZ = fireball->pos.z;
+
+    enemyCollHeight = enemy->collisionHeight;
+    enemyCollRadius = enemy->collisionDiameter * 0.55;
+
+    fireballCollHeight = fireball->collisionHeight;
+    fireballCollHeight = fireball->collisionDiameter * 0.8;
+
+    angleToEnemy = atan2(enemyX, enemyZ, fireballX, fireballZ);
+    distToEnemy = dist2D(enemyX, enemyZ, fireballX, fireballZ);
+
+    xTemp = fireball->pos.x;
+    yTemp = fireball->pos.y;
+    zTemp = fireball->pos.z;
+
+    if (npc_test_move_taller_with_slipping(0, &xTemp, &yTemp, &zTemp, distToEnemy, angleToEnemy,
+        fireballCollHeight, fireballCollRadius + enemyCollRadius)
+    ) {
+        return FALSE;
+    }
+
+    if (fireballY > enemyY + enemyCollHeight) {
+        return FALSE;
+    }
+
+    if (enemyY > fireballY + fireballCollHeight) {
+        return FALSE;
+    }
+
+    fireballX = enemyX - fireballX;
+    fireballZ = enemyZ - fireballZ;
+    distToEnemy = SQ(fireballX) + SQ(fireballZ);
+
+    if (!(SQ(fireballCollRadius) + SQ(enemyCollRadius) <= distToEnemy)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
 void fireball_hit_entity(void) {
     Entity* entity;
 
@@ -61,7 +120,6 @@ void on_fireball_render(Npc* fireballNpc) {
         fireballNpc->rotation.z += 30.0f;
         update_collision(fireballNpc);
         npc_move_heading(fireballNpc, fireballNpc->moveSpeed, fireballNpc->yaw);
-
     }
     else {
         free_npc_by_index(fireballStatus.activeFireballIndex);
