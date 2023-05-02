@@ -9,6 +9,15 @@ API_CALLABLE(N(IsPartnerBow)) {
     return ApiStatus_DONE2;
 }
 
+API_CALLABLE(N(IsSlowGhostActive)) {
+    if (is_ability_active(ABILITY_SLOW_GHOST)) {
+        script->varTable[0] = TRUE;
+    } else {
+        script->varTable[0] = FALSE;
+    }
+    return ApiStatus_DONE2;
+}
+
 EvtScript N(D_802480E0_84ACB0) = {
     EVT_LOOP(0)
         EVT_CALL(PlaySoundAtNpc, LVar0, SOUND_B0000021, SOUND_SPACE_MODE_0)
@@ -138,7 +147,7 @@ EvtScript N(D_80248798_84B368) = {
     EVT_END_LOOP
     EVT_SET(LVar7, 0)
     EVT_LOOP(0)
-        EVT_CALL(N(IsPartnerBow))
+        EVT_CALL(N(IsSlowGhostActive))
         EVT_IF_NE(LVar0, 0)
             EVT_SET(LVar7, 1)
             EVT_BREAK_LOOP
