@@ -147,10 +147,18 @@
 	[Pause 10]Use your Slow Ghost badge![Wait][End]
 }
 
-#message:0E:(NPC_StanleyCool) {
+#message:2F:(NPC_StanleyCool) {
 	[Style right]
 	Everything's cool, Mario![BR]
 	[Pause 10]He can't see you! Remember,[BR]
 	you can toggle this ability[BR]
 	anytime in the badges menu![Wait][End]
 }
+
+#message:2F:(NPC_TubbaHeartTired) {
+	[Style right]
+	Oof.. That was intense![BR]
+	[Pause 10]Gonna have to catch my breath[BR]
+	for a second here.[Wait][End]
+}
+

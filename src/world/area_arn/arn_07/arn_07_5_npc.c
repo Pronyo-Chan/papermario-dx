@@ -163,13 +163,13 @@ EvtScript N(EVS_Scene_BossDefeated) = {
     EVT_CALL(SetCamProperties, CAM_DEFAULT, EVT_FLOAT(2.0), LVar0, LVar1, LVar2, EVT_FLOAT(300.0), EVT_FLOAT(15.0), EVT_FLOAT(-7.0))
     EVT_CALL(PlayerFaceNpc, LVar5, FALSE)
     EVT_WAIT(10 * DT)
-    EVT_CALL(SpeakToPlayer, LVar5, ANIM_WorldBow_Talk, ANIM_WorldBow_Idle, 0, MSG_CH3_00CE)
+    /*EVT_CALL(SpeakToPlayer, LVar5, ANIM_WorldBow_Talk, ANIM_WorldBow_Idle, 0, MSG_CH3_00CE)
     EVT_CALL(ShowChoice, MSG_Choice_000D)
     EVT_IF_EQ(LVar0, 0)
         EVT_CALL(ContinueSpeech, LVar5, ANIM_WorldBow_Celebrate, ANIM_WorldBow_Celebrate, 0, MSG_CH3_00CF)
     EVT_ELSE
         EVT_CALL(ContinueSpeech, LVar5, ANIM_WorldBow_Celebrate, ANIM_WorldBow_Celebrate, 0, MSG_CH3_00D0)
-    EVT_END_IF
+    EVT_END_IF*/
     EVT_CALL(SpeakToPlayer, LVar5, ANIM_WorldBow_Talk, ANIM_WorldBow_Idle, 0, MSG_CH3_00D1)
     EVT_CALL(UseSettingsFrom, CAM_DEFAULT, 175, 0, 0)
     EVT_CALL(SetCamSpeed, CAM_DEFAULT, EVT_FLOAT(4.0 / DT))

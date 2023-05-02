@@ -13,6 +13,7 @@
 *General*
 - Fireball shows up as a present when given by Kooper
 - Kooper has no interact script after he gives the Fireball
+- Fix demo crash
 
 
 **IMPROVEMENTS**

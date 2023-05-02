@@ -362,18 +362,22 @@ EvtScript N(takeTurn_802245C8) = {
             EVT_END_IF
         EVT_CASE_EQ(1)
             EVT_EXEC_WAIT(N(802255D8))
+            EVT_WAIT(20)
+            EVT_CALL(ActorSpeak, MSG_NPC_TubbaHeartTired, ACTOR_SELF, 1, ANIM_TubbasHeart_Anim0B, ANIM_TubbasHeart_Anim01)
+            EVT_CALL(SetActorVar, ACTOR_SELF, 0, 2)
+        EVT_CASE_EQ(2)
             EVT_CALL(GetActorVar, ACTOR_SELF, 1, LVar0)
             EVT_IF_EQ(LVar0, 0)
                 EVT_CALL(GetActorVar, ACTOR_SELF, 5, LVar1)
                 EVT_ADD(LVar1, 1)
                 EVT_CALL(SetActorVar, ACTOR_SELF, 5, LVar1)
                 EVT_IF_GE(LVar1, 2)
-                    EVT_CALL(SetActorVar, ACTOR_SELF, 0, 2)
+                    EVT_CALL(SetActorVar, ACTOR_SELF, 0, 3)
                 EVT_ELSE
                     EVT_CALL(SetActorVar, ACTOR_SELF, 0, 0)
                 EVT_END_IF
             EVT_END_IF
-        EVT_CASE_EQ(2)
+        EVT_CASE_EQ(3)
             EVT_CALL(SetActorVar, ACTOR_SELF, 0, 0)
             EVT_EXEC_WAIT(N(80224B3C))
     EVT_END_SWITCH
@@ -611,7 +615,7 @@ EvtScript N(802255D8) = {
     EVT_CALL(UseIdleAnimation, ACTOR_PLAYER, TRUE)
     EVT_WAIT(2)
     EVT_CALL(SetGoalToTarget, ACTOR_SELF)
-    EVT_CALL(EnemyDamageTarget, ACTOR_SELF, LVar0, DAMAGE_TYPE_NO_CONTACT, 0, 0, 12, BS_FLAGS1_SP_EVT_ACTIVE)
+    EVT_CALL(EnemyDamageTarget, ACTOR_SELF, LVar0, DAMAGE_TYPE_NO_CONTACT, 0, 0, 10, BS_FLAGS1_SP_EVT_ACTIVE)
     EVT_RETURN
     EVT_END
 };
