@@ -784,6 +784,7 @@ void update_encounters_neutral(void) {
                 case ACTION_STATE_SPIN_POUND:
                 case ACTION_STATE_TORNADO_JUMP:
                 case ACTION_STATE_TORNADO_POUND:
+                case ACTION_STATE_AIRDASH:
                     x = playerX;
                     z = playerZ;
                     if (!(enemy->flags & ENEMY_FLAG_IGNORE_JUMP)) {
@@ -814,7 +815,8 @@ void update_encounters_neutral(void) {
                                 playerStatus->actionState == ACTION_STATE_SPIN_JUMP ||
                                 playerStatus->actionState == ACTION_STATE_SPIN_POUND ||
                                 playerStatus->actionState == ACTION_STATE_TORNADO_JUMP ||
-                                playerStatus->actionState == ACTION_STATE_TORNADO_POUND) {
+                                playerStatus->actionState == ACTION_STATE_TORNADO_POUND ||
+                                playerStatus->actionState == ACTION_STATE_AIRDASH) {
                                 triggeredBattle = TRUE;
                             }
                         }

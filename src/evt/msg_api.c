@@ -35,6 +35,7 @@ ApiStatus SpeakToNpc(Evt* script, s32 isInitialCall) {
 
 s32 _show_message(Evt* script, s32 isInitialCall, s32 mode) {
     PlayerStatus* playerStatus = &gPlayerStatus;
+    PlayerData* playerData = &gPlayerData;
     Bytecode* args = script->ptrReadPos;
     s32 screenX, screenY, screenZ;
     Npc* speakerNpc;
@@ -53,6 +54,9 @@ s32 _show_message(Evt* script, s32 isInitialCall, s32 mode) {
     if (isInitialCall) {
         D_802DB264 = 0;
         speakerNpcID = evt_get_variable(script, *args++);
+        if (speakerNpcID == NPC_PARTNER && playerData->currentPartner != PARTNER_TWINK)  {
+            return TRUE;
+        }
         script->varTable[13] = evt_get_variable(script, *args++);
         script->varTable[14] = evt_get_variable(script, *args++);
         script->functionTemp[1] = evt_get_variable(script, *args++);
@@ -93,6 +97,9 @@ s32 _show_message(Evt* script, s32 isInitialCall, s32 mode) {
             script->varTable[15] = playerStatus->targetYaw;
         } else {
             speakerNpc = resolve_npc(script, speakerNpcID);
+            if (speakerNpc == NULL) {
+                return TRUE;
+            }
             get_screen_coords(gCurrentCameraID, speakerNpc->pos.x, speakerNpc->pos.y + speakerNpc->collisionHeight, speakerNpc->pos.z,
                               &screenX, &screenY, &screenZ);
             script->functionTemp[3] = speakerNpc->currentAnim;

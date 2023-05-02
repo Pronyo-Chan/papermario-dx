@@ -1228,3 +1228,6 @@
 #define ICON_anim_hand_8_palette 0x2D2E0
 #define ICON_anim_hand_9_raster 0x2D300
 #define ICON_anim_hand_9_palette 0x2D420
+
+#define ICON_key_fireball_raster 0x2D460
+#define ICON_key_fireball_palette 0x2D580

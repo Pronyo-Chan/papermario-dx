@@ -227,6 +227,7 @@ void phys_player_land(void);
 void phys_main_collision_below(void);
 void phys_peach_update(void);
 void check_input_spin(void);
+void check_input_airdash(void);
 
 b32 npc_test_move_simple_without_slipping(s32, f32*, f32*, f32*, f32, f32, f32, f32);
 

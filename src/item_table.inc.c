@@ -4750,5 +4750,18 @@ ItemData gItemTable[] = {
     .moveID = MOVE_NONE,
     .potencyA = 0,
     .potencyB = 0
+},
+{   // item 16D: Fireball
+    .nameMsg = MSG_ItemName_Fireball,
+    .fullDescMsg = MSG_ItemFullDesc_Fireball,
+    .shortDescMsg = MSG_ItemShortDesc_Fireball,
+    .sellValue = -1,
+    .hudElemID = ITEM_HS_INDEX(HES_Item_FireShield),
+    .sortValue = 0,
+    .targetFlags = TARGET_FLAG_PLAYER,
+    .typeFlags = ITEM_TYPE_FLAG_KEY | ITEM_TYPE_FLAG_ENTITY_FULLSIZE,
+    .moveID = MOVE_NONE,
+    .potencyA = 0,
+    .potencyB = 0
 }
 };

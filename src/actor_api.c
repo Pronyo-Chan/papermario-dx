@@ -2721,6 +2721,10 @@ ApiStatus UseIdleAnimation(Evt* script, s32 isInitialCall) {
     s32 actorID = evt_get_variable(script, *args++);
     s32 temp_s0_3 = evt_get_variable(script, *args++);
 
+    if (actorID == ACTOR_PARTNER) {
+        return ApiStatus_DONE2;
+    }
+
     if (actorID == ACTOR_SELF) {
         actorID = script->owner1.actorID;
     }

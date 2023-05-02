@@ -966,13 +966,6 @@ EvtScript N(EVS_NpcIdle_DarkToad_01) = {
         EVT_END_IF
         EVT_WAIT(1)
     EVT_END_LOOP
-    EVT_LOOP(0)
-        EVT_CALL(PartnerCanUseAbility, LVar0)
-        EVT_IF_EQ(LVar0, FALSE)
-            EVT_BREAK_LOOP
-        EVT_END_IF
-        EVT_WAIT(1)
-    EVT_END_LOOP
     EVT_CALL(DisablePlayerInput, TRUE)
     EVT_EXEC_WAIT(N(EVS_Scene_KoopaBrosUnmasked))
     EVT_CALL(DisablePlayerInput, FALSE)

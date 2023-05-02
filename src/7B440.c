@@ -102,6 +102,8 @@ void reset_player_status(void) {
     playerStatus->flipYaw[CAM_TATTLE] = 0.0f;
     playerStatus->flipYaw[CAM_3] = 0.0f;
 
+    playerStatus->airdashCount = 0;
+
     mapSettings = gAreas[gGameStatusPtr->areaID].maps[gGameStatusPtr->mapID].settings;
 
     if (mapSettings->entryList != NULL) {

@@ -3,6 +3,7 @@
 #include "world/actions.h"
 #include "sprite.h"
 #include "world/partner/watt.h"
+#include "world/action/fireball.h"
 
 #ifdef SHIFT
 #define inspect_icon_VRAM_DEF inspect_icon_VRAM
@@ -688,7 +689,7 @@ void check_input_use_partner(void) {
 
     if (!(playerStatus->animFlags & PA_FLAG_8BIT_MARIO)
         && (playerStatus->animFlags & PA_FLAG_FORCE_USE_PARTNER || playerStatus->inputDisabledCount == 0)
-        && (playerStatus->pressedButtons & BUTTON_C_DOWN && !(playerStatus->flags & PS_FLAG_NO_PARTNER_USAGE))
+        && (playerStatus->pressedButtons & BUTTON_C_DOWN)
         && !(playerStatus->pressedButtons & BUTTON_B)
         && !(playerStatus->animFlags & PA_FLAG_USING_PEACH_PHYSICS)
         && actionState <= ACTION_STATE_RUN
@@ -696,7 +697,8 @@ void check_input_use_partner(void) {
         if (playerData->currentPartner == PARTNER_GOOMBARIO) {
             WorldTattleInteractionID = playerStatus->interactingWithID;
         }
-        partner_use_ability();
+        //partner_use_ability();
+        use_fireball();
     }
 }
 

@@ -24,7 +24,8 @@ s32 can_trigger_loading_zone(void) {
         actionState == ACTION_STATE_WALK ||
         actionState == ACTION_STATE_RUN ||
         actionState == ACTION_STATE_USE_TWEESTER ||
-        actionState == ACTION_STATE_SPIN
+        actionState == ACTION_STATE_SPIN ||
+        actionState == ACTION_STATE_AIRDASH
        ) {
         return TRUE;
     }
@@ -167,6 +168,10 @@ void func_800E2BB0(void) {
     PlayerStatus* playerStatus = &gPlayerStatus;
     s32 cond = FALSE;
 
+    if (playerStatus->actionState == ACTION_STATE_AIRDASH) {
+        return;
+    }
+
     if (playerStatus->position.y < playerStatus->gravityIntegrator[3] + playerStatus->gravityIntegrator[2]) {
         f32 phi_f6 = (playerStatus->gravityIntegrator[3] - playerStatus->position.y) / 777.0f;
 
@@ -198,6 +203,10 @@ void func_800E2BB0(void) {
 
 void phys_update_jump(void) {
     PlayerStatus* playerStatus = &gPlayerStatus;
+
+    if(playerStatus->actionState == ACTION_STATE_AIRDASH) {
+        return;
+    }
 
     if (playerStatus->timeInAir != 0) {
         switch (playerStatus->actionState) {
@@ -387,6 +396,9 @@ void phys_player_land(void) {
     playerStatus->landPos.x = playerStatus->position.x;
     playerStatus->landPos.z = playerStatus->position.z;
     playerStatus->flags &= ~PS_FLAG_AIRBORNE;
+
+    playerStatus->airdashCount = 0;
+
     sfx_play_sound_at_player(SOUND_SOFT_LAND, SOUND_SPACE_MODE_0);
     if (!(collisionStatus->currentFloor & COLLISION_WITH_ENTITY_BIT)) {
         phys_adjust_cam_on_landing();
@@ -1103,6 +1115,12 @@ void check_input_midair_jump(void) {
                 gPlayerStatus.flags |= PS_FLAG_FLYING;
                 break;
         }
+    }
+    if (!(gPlayerStatus.flags & (PS_FLAG_SCRIPTED_FALL | PS_FLAG_SLIDING | PS_FLAG_FLYING))
+        && !(gPlayerStatus.animFlags & (PA_FLAG_8BIT_MARIO | PA_FLAG_USING_WATT))
+        && gPlayerStatus.pressedButtons & BUTTON_Z
+    ) {
+        check_input_airdash();
     }
 }
 

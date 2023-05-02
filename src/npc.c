@@ -998,6 +998,10 @@ Npc* get_npc_unsafe(s32 npcID) {
     s32 i;
     Npc* npc;
 
+    if (npcID == NPC_PARTNER) {
+        return NULL;
+    }
+
     for (i = 0; i < MAX_NPCS; i++) {
         npc = (*gCurrentNpcListPtr)[i];
         if (npc != NULL && npc->flags != 0 && npc->npcID == npcID) {

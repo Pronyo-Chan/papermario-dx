@@ -2,6 +2,8 @@
 #include "nok_04.h"
 #include "effects.h"
 
+#include "world/common/complete/GiveReward.inc.c"
+
 #define NUM_THREAD_SEGMENTS 16
 
 typedef struct FuzzyThread {
@@ -862,6 +864,14 @@ EvtScript N(EVS_ChooseShell) = {
     EVT_END
 };
 
+EvtScript N(EVS_KooperLeaves) = {
+    EVT_CALL(SpeakToPlayer, NPC_Kooper, ANIM_WorldKooper_Talk, ANIM_WorldKooper_Idle, 0, MSG_NPC_KooperThanks)
+    EVT_GIVE_KEY_REWARD(ITEM_FIREBALL)
+    EVT_SET(GB_StoryProgress, STORY_CH1_KOOPER_JOINED_PARTY)
+    EVT_RETURN
+    EVT_END
+};
+
 EvtScript N(EVS_Scene_KooperArrives) = {
     EVT_LABEL(0)
         EVT_CALL(GetPlayerPos, LVar0, LVar1, LVar2)
@@ -951,7 +961,8 @@ EvtScript N(EVS_Scene_KooperArrives) = {
     EVT_CALL(SetNpcAnimation, NPC_Kooper, ANIM_WorldKooper_Idle)
     EVT_CALL(SpeakToNpc, NPC_PARTNER, ANIM_WorldGoombario_Talk, ANIM_WorldGoombario_Idle, 0, NPC_Kooper, MSG_CH1_00C8)
     EVT_WAIT(20 * DT)
-    EVT_CALL(SpeakToPlayer, NPC_Kooper, ANIM_WorldKooper_Talk, ANIM_WorldKooper_Idle, 0, MSG_CH1_00C9)
+    EVT_EXEC_WAIT(N(EVS_KooperLeaves))
+    /*EVT_CALL(SpeakToPlayer, NPC_Kooper, ANIM_WorldKooper_Talk, ANIM_WorldKooper_Idle, 0, MSG_CH1_00C9)
     EVT_WAIT(10 * DT)
     EVT_CALL(PlaySoundAtPlayer, SOUND_263, 0)
     EVT_CALL(ShowEmote, 0, EMOTE_QUESTION, -45, 50, EMOTER_PLAYER, 0, 0, 0, 0)
@@ -990,7 +1001,7 @@ EvtScript N(EVS_Scene_KooperArrives) = {
     EVT_CALL(ShowMessageAtScreenPos, MSG_Menus_018A, 160, 40)
     EVT_EXEC(N(EVS_PopSong))
     EVT_WAIT(10 * DT)
-    EVT_CALL(EnablePartnerAI)
+    EVT_CALL(EnablePartnerAI)*/
     EVT_CALL(PanToTarget, CAM_DEFAULT, 0, 0)
 #if VERSION_PAL
     EVT_CALL(SetCamSpeed, CAM_DEFAULT, EVT_FLOAT(3 / DT))

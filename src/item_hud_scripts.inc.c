@@ -411,6 +411,8 @@ HudScript HES_Item_Unused_08B_disabled = STANDARD_ITEM_HUD_SCRIPT(key_Postcard_d
 HudScript HES_Item_Unused_08C = STANDARD_ITEM_HUD_SCRIPT(key_EmptyBook);
 HudScript HES_Item_Unused_08C_disabled = STANDARD_ITEM_HUD_SCRIPT(key_EmptyBook_disabled);
 
+HudScript HES_Item_Fireball = STANDARD_ITEM_HUD_SCRIPT(key_fireball);
+
 HudScript HES_Item_Unused_08D = STANDARD_ITEM_HUD_SCRIPT(unused_08D);
 HudScript HES_Item_Unused_08D_disabled = STANDARD_ITEM_HUD_SCRIPT(unused_08D_disabled);
 

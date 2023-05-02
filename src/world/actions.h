@@ -20,7 +20,7 @@ typedef struct DisguiseAnims {
 } DisguiseAnims; // size = 0x18
 
 extern f32 LastMidairPlayerVelY;
-extern Action PlayerActionsTable[39];
+extern Action PlayerActionsTable[40];
 
 extern DisguiseAnims BasicPeachDisguiseAnims[4];
 extern AnimID* PeachDisguiseExtraAnims[4];

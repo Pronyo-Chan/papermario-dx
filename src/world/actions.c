@@ -36,6 +36,7 @@ void action_update_use_spinning_flower(void);
 void action_update_use_munchlesia(void);
 void action_update_use_tweester(void);
 void action_update_state_23(void);
+void action_update_airdash(void);
 
 s32 PrevPlayerCamRelativeYaw = 0;
 s32 D_800F7B44 = 0;
@@ -183,4 +184,5 @@ Action PlayerActionsTable[] = {
     //@bug function does not exist in world_action_walk, causes jump to middle of action_update_run and crashes
     [ACTION_STATE_INVALID_25]           { action_update_launch, ACTION_FILE(walk), FALSE },
     [ACTION_STATE_USE_SPRING]           { action_update_launch, ACTION_FILE(misc), TRUE },
+    [ACTION_STATE_AIRDASH]              { action_update_airdash, ACTION_FILE(spin), FALSE },
 };

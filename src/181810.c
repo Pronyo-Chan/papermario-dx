@@ -131,6 +131,10 @@ ApiStatus ActorSpeak(Evt* script, s32 isInitialCall) {
         gSpeakingActorIdleAnim = evt_get_variable(script, *args++);
         msgID2 = msgID;
 
+        if (actorID == ACTOR_PARTNER) {
+            return ApiStatus_DONE1;
+        }
+
         if (actorID == ACTOR_SELF) {
             actorID = script->owner1.actorID;
         }

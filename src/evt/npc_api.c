@@ -19,7 +19,7 @@ void set_npc_animation(Npc* npc, u32 animID) {
     PlayerData* playerData = &gPlayerData;
 
     if (PARTNER_ANIM_STILL <= animID && animID <= PARTNER_ANIM_HURT) {
-        npc->currentAnim = gPartnerAnimations[playerData->currentPartner].anims[animID - PARTNER_ANIM_STILL];
+        //npc->currentAnim = gPartnerAnimations[playerData->currentPartner].anims[animID - PARTNER_ANIM_STILL];
     } else if (ENEMY_ANIM_IDLE <= animID && animID <= ENEMY_ANIM_F) {
         npc->currentAnim = get_enemy(npc->npcID)->animList[animID - ENEMY_ANIM_IDLE];
     } else {
@@ -705,7 +705,7 @@ ApiStatus EnableNpcBlur(Evt* script, s32 isInitialCall) {
 }
 
 ApiStatus ClearPartnerMoveHistory(Evt* script, s32 isInitialCall) {
-    Bytecode* ptrReadPos = script->ptrReadPos;
+    /*Bytecode* ptrReadPos = script->ptrReadPos;
     s32 npcID = evt_get_variable(script, *ptrReadPos++);
     Npc* npc = resolve_npc(script, npcID);
 
@@ -713,7 +713,7 @@ ApiStatus ClearPartnerMoveHistory(Evt* script, s32 isInitialCall) {
         return ApiStatus_DONE2;
     }
 
-    partner_clear_player_tracking(npc);
+    partner_clear_player_tracking(npc);*/
     return ApiStatus_DONE2;
 }
 
@@ -781,7 +781,7 @@ ApiStatus func_802CF56C(Evt* script, s32 isInitialCall) {
 }
 
 s32 BringPartnerOut(Evt* script, s32 isInitialCall) {
-    Bytecode* args = script->ptrReadPos;
+    /*Bytecode* args = script->ptrReadPos;
     NpcBlueprint bp;
     NpcBlueprint* bpPointer = &bp;
     PlayerData* playerData = &gPlayerData;
@@ -871,11 +871,12 @@ s32 BringPartnerOut(Evt* script, s32 isInitialCall) {
         npc->yaw = clamp_angle(npc->yaw + 180.0f);
         return ApiStatus_DONE2;
     }
-    return ApiStatus_BLOCK;
+    return ApiStatus_BLOCK;*/
+    return ApiStatus_DONE2;
 }
 
 ApiStatus PutPartnerAway(Evt* script, s32 isInitialCall) {
-    Npc* partner = get_npc_unsafe(NPC_PARTNER);
+    /*Npc* partner = get_npc_unsafe(NPC_PARTNER);
     PlayerStatus* playerStatus = &gPlayerStatus;
     f32 scale;
     f32 targetX;
@@ -943,25 +944,26 @@ ApiStatus PutPartnerAway(Evt* script, s32 isInitialCall) {
         get_npc_unsafe(-5)->npcID = NPC_PARTNER;
         return ApiStatus_DONE2;
     }
-    return ApiStatus_BLOCK;
+    return ApiStatus_BLOCK;*/
+    return ApiStatus_DONE2;
 }
 
 ApiStatus GetCurrentPartnerID(Evt* script, s32 isInitialCall) {
-    evt_set_variable(script, *script->ptrReadPos, gPlayerData.currentPartner);
+    //evt_set_variable(script, *script->ptrReadPos, gPlayerData.currentPartner);
     return ApiStatus_DONE2;
 }
 
 ApiStatus PartnerCanUseAbility(Evt* script, s32 isInitialCall) {
-    Bytecode outVar = *script->ptrReadPos;
+    //Bytecode outVar = *script->ptrReadPos;
 
-    evt_set_variable(script, outVar, partner_can_use_ability());
+    //evt_set_variable(script, outVar, partner_can_use_ability());
     return ApiStatus_DONE2;
 }
 
 ApiStatus PartnerIsFlying(Evt* script, s32 isInitialCall) {
-    Bytecode outVar = *script->ptrReadPos;
+    //Bytecode outVar = *script->ptrReadPos;
 
-    evt_set_variable(script, outVar, partner_is_flying());
+    //evt_set_variable(script, outVar, partner_is_flying());
     return ApiStatus_DONE2;
 }
 

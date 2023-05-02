@@ -52,6 +52,9 @@ ApiStatus GetAngleBetweenNPCs(Evt* script, s32 isInitialCall) {
 
     Npc* a = resolve_npc(script, aID);
     Npc* b = resolve_npc(script, bID);
+    if (a == NULL || b == NULL) {
+        return ApiStatus_DONE2;
+    }
     evt_set_variable(script, outVar, atan2(a->pos.x, a->pos.z, b->pos.x, b->pos.z));
 
     return ApiStatus_DONE2;

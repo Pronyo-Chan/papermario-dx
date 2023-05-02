@@ -35,6 +35,8 @@ void action_update_land(void) {
         playerStatus->landPos.x = playerStatus->position.x;
         playerStatus->landPos.z = playerStatus->position.z;
 
+        playerStatus->airdashCount = 0;
+
         if (playerStatus->animFlags & PA_FLAG_8BIT_MARIO) {
             anim = ANIM_MarioW3_8bit_Still;
         } else if (!(playerStatus->animFlags & PA_FLAG_USING_WATT)) {

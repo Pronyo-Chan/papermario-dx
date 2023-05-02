@@ -41,6 +41,7 @@ void N(ClubbaNappingAI_Sleep)(Evt* script, MobileAISettings* aiSettings, EnemyDe
     if (basic_ai_check_player_dist(territory, enemy, 80.0f, 0.0f, 0)) {
         if (   gPlayerStatusPtr->actionState == ACTION_STATE_RUN
             || gPlayerStatusPtr->actionState == ACTION_STATE_SPIN
+            || gPlayerStatusPtr->actionState == ACTION_STATE_AIRDASH
             || gPlayerStatusPtr->actionState == ACTION_STATE_JUMP
             || gPlayerStatusPtr->actionState == ACTION_STATE_SPIN_POUND
             || gPlayerStatusPtr->actionState == ACTION_STATE_TORNADO_POUND

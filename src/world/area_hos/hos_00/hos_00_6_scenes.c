@@ -76,7 +76,7 @@ API_CALLABLE(N(HavePartyFaceTwink)) {
     Npc* partner = get_npc_unsafe(NPC_PARTNER);
     Npc* npc = get_npc_unsafe(NPC_Twink);
 
-    partner->yaw = atan2(partner->pos.x, partner->pos.z, npc->pos.x, npc->pos.z);
+    //partner->yaw = atan2(partner->pos.x, partner->pos.z, npc->pos.x, npc->pos.z);
     gPlayerStatus.targetYaw = atan2(gPlayerStatus.position.x, gPlayerStatus.position.z, npc->pos.x, npc->pos.z);
     npc->yaw = atan2(N(LastTwinkPosX), N(LastTwinkPosZ), npc->pos.x, npc->pos.z);
     N(LastTwinkPosX) = npc->pos.x;
@@ -339,32 +339,6 @@ EvtScript N(EVS_Scene_MeetingTwink) = {
     EVT_CALL(AddKeyItem, LVar0)
     EVT_CALL(N(EnableActionCommands))
     EVT_CALL(SetNpcAnimation, NPC_Twink, ANIM_Twink_Idle)
-    EVT_WAIT(20 * DT)
-    EVT_CALL(SpeakToPlayer, NPC_Twink, ANIM_Twink_Talk, ANIM_Twink_Idle, 0, MSG_HOS_0013)
-    EVT_CALL(ShowChoice, MSG_Choice_0013)
-    EVT_IF_EQ(LVar0, 1)
-        EVT_CALL(ContinueSpeech, NPC_Twink, ANIM_Twink_Talk, ANIM_Twink_Idle, 0, MSG_HOS_0014)
-        EVT_CALL(ShowChoice, MSG_Choice_0013)
-        EVT_IF_NE(LVar0, 0)
-            EVT_CALL(ContinueSpeech, NPC_Twink, ANIM_Twink_Talk, ANIM_Twink_Idle, 0, MSG_HOS_0015)
-        EVT_ELSE
-            EVT_GOTO(15)
-        EVT_END_IF
-    EVT_ELSE
-        EVT_LABEL(15)
-        EVT_CALL(ContinueSpeech, NPC_Twink, ANIM_Twink_Talk, ANIM_Twink_Idle, 0, MSG_HOS_0016)
-        EVT_CALL(SpeakToPlayer, NPC_PARTNER, ANIM_WorldGoombario_Talk, ANIM_WorldGoombario_Idle, 0, MSG_HOS_0017)
-        EVT_CALL(SpeakToPlayer, NPC_Twink, ANIM_Twink_Talk, ANIM_Twink_Idle, 0, MSG_HOS_0018)
-        EVT_CALL(SetPlayerAnimation, ANIM_MarioW2_SpeakUp)
-        EVT_CALL(SetNpcVar, NPC_Twink, 0, 1)
-        EVT_LOOP(0)
-            EVT_CALL(GetNpcVar, NPC_Twink, 0, LVar0)
-            EVT_IF_EQ(LVar0, 2)
-                EVT_BREAK_LOOP
-            EVT_END_IF
-            EVT_WAIT(1)
-        EVT_END_LOOP
-    EVT_END_IF
     EVT_CALL(DisablePartnerAI, 0)
     EVT_CALL(SetNpcAnimation, NPC_PARTNER, PARTNER_ANIM_IDLE)
     EVT_CALL(SpeakToPlayer, NPC_Twink, ANIM_Twink_Talk, ANIM_Twink_Idle, 0, MSG_HOS_002F)

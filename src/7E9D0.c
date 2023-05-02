@@ -464,6 +464,10 @@ s32 check_input_hammer(void) {
             return FALSE;
         }
 
+        if (playerStatus->timeInAir > 0) {
+            return FALSE;
+        }
+
         set_action_state(ACTION_STATE_HAMMER);
         return TRUE;
     }
@@ -476,6 +480,10 @@ s32 check_input_jump(void) {
     s32 surfaceType;
 
     if (!(playerStatus->pressedButtons & BUTTON_A)) {
+        return FALSE;
+    }
+
+    if (playerStatus->timeInAir > 0) {
         return FALSE;
     }
 
@@ -518,6 +526,10 @@ void check_input_spin(void) {
     PlayerSpinState* spinState = &gPlayerSpinState;
     PlayerSpinState* temp2 = spinState;
 
+    if(playerStatus->flags & PS_FLAG_AIRBORNE) {
+        return;
+    }
+
     if (!((playerStatus->flags & (PS_FLAG_NO_STATIC_COLLISION | PS_FLAG_CUTSCENE_MOVEMENT)) ||
           (playerStatus->animFlags & PA_FLAG_USING_WATT) ||
           (playerStatus->currentButtons & BUTTON_C_DOWN) ||
@@ -533,6 +545,50 @@ void check_input_spin(void) {
                     if (actionState >= 0 && !(playerStatus->animFlags & PA_FLAG_SPINNING)) {
                         if (btnPressed || spinState->hasBufferedSpin) {
                             set_action_state(ACTION_STATE_SPIN);
+                            if (spinState->hasBufferedSpin != FALSE) {
+                                if (spinState->bufferedStickAxis.x != 0 || spinState->bufferedStickAxis.y != 0) {
+                                    playerStatus->prevActionState = temp2->prevActionState;
+                                } else {
+                                    playerStatus->prevActionState = ACTION_STATE_IDLE;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void check_input_airdash(void) {
+    PlayerStatus* playerStatus = &gPlayerStatus;
+    PlayerSpinState* spinState = &gPlayerSpinState;
+    PlayerSpinState* temp2 = spinState;
+
+    if (!((playerStatus->flags & (PS_FLAG_NO_STATIC_COLLISION | PS_FLAG_CUTSCENE_MOVEMENT)) ||
+          (playerStatus->animFlags & PA_FLAG_USING_WATT) ||
+          (playerStatus->currentButtons & BUTTON_C_DOWN) ||
+          is_ability_active(ABILITY_SLOW_GO))) {
+
+        s32 actionState = playerStatus->actionState;
+        s32 btnPressed = playerStatus->pressedButtons & Z_TRIG;
+
+        // TODO
+        if (actionState != ACTION_STATE_RIDE) {
+            if (actionState < ACTION_STATE_STEP_UP) {
+                if (actionState >= 0 && !(playerStatus->animFlags & PA_FLAG_SPINNING)) {
+                    if (btnPressed || spinState->hasBufferedSpin) {
+                        if (playerStatus->airdashCount < 1) {
+                            playerStatus->gravityIntegrator[0] = 0.0f;
+                            playerStatus->gravityIntegrator[1] = 0.0f;
+                            playerStatus->gravityIntegrator[2] = 0.0f;
+                            playerStatus->gravityIntegrator[3] = 0.0f;
+                            playerStatus->airdashCount += 1;
+
+                            //DEBUG
+
+                            //
+                            set_action_state(ACTION_STATE_AIRDASH);
                             if (spinState->hasBufferedSpin != FALSE) {
                                 if (spinState->bufferedStickAxis.x != 0 || spinState->bufferedStickAxis.y != 0) {
                                     playerStatus->prevActionState = temp2->prevActionState;

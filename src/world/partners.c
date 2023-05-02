@@ -2381,7 +2381,13 @@ void func_800EF314(void) {
 }
 
 void enable_partner_ai(void) {
+    PlayerData* playerData = &gPlayerData;
     wPartnerFollowState = 0;
+
+    if(playerData->currentPartner != PARTNER_TWINK) {
+        return;
+    }
+
     partner_clear_player_tracking(wPartnerNpc);
 
     if (!wPartner->isFlying) {

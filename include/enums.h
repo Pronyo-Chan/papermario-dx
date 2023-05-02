@@ -2122,6 +2122,7 @@ enum ItemIDs {
     ITEM_BOOTS2_ICON                  = 0x0000016A,
     ITEM_BOOTS3_ICON                  = 0x0000016B,
     ITEM_ITEMS_ICON                   = 0x0000016C,
+    ITEM_FIREBALL                     = 0x0000016D,
 };
 
 #define LOOKUP_ITEM(itemID) gItemTable[itemID & ~0xF0000]
@@ -3203,6 +3204,7 @@ enum ActionStates {
     ACTION_STATE_24                             = 0x00000024,
     ACTION_STATE_INVALID_25                     = 0x00000025,
     ACTION_STATE_USE_SPRING                     = 0x00000026,
+    ACTION_STATE_AIRDASH                        = 0x00000027,
 };
 
 enum JumpSubstate {

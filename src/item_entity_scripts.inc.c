@@ -485,6 +485,8 @@ ItemScript IES_Unused_0F6 = STANDARD_ITEM_SCRIPT(unused_0F6);
 
 ItemScript IES_Unused_0F7 = STANDARD_ITEM_SCRIPT(unused_0F7);
 
+ItemScript IES_Fireball = STANDARD_ITEM_SCRIPT(key_fireball);
+
 ItemScript IES_Heart = {
     is_SetIcon(10, anim_heart_0)
     is_SetIcon(6, anim_heart_1)
@@ -1167,7 +1169,9 @@ s32* gItemEntityScripts[] = {
     IES_Jump,
     IES_Jump,
     IES_Jump,
-    IES_Jump
+    IES_Jump,
+
+    IES_Fireball
 };
 
 /* indexed by itemID */
@@ -1873,5 +1877,8 @@ s32 gItemIconPaletteOffsets[] = {
     ICON_anim_sp_0_palette,
     ICON_anim_hp_0_palette,
     ICON_anim_fp_0_palette,
-    ICON_anim_star_piece_0_palette
+    ICON_anim_star_piece_0_palette,
+
+    ICON_key_fireball_raster,
+    ICON_key_fireball_palette
 };
