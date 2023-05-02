@@ -2741,7 +2741,7 @@ EvtScript N(handleEvent_802242FC) = {
             EVT_EXEC_WAIT(N(80223870))
             EVT_WAIT(30)
             EVT_CALL(GetLastElement, LVar0)
-            EVT_IF_FLAG(LVar0, DAMAGE_TYPE_SHOCK | DAMAGE_TYPE_BLAST)
+            EVT_IF_FLAG(LVar0, DAMAGE_TYPE_SHOCK | DAMAGE_TYPE_BLAST | DAMAGE_TYPE_SMASH)
                 EVT_CALL(GetActorVar, ACTOR_ENEMY4, 0, LVar0)
                 EVT_BITWISE_OR_CONST(LVar0, 0x40)
                 EVT_CALL(SetActorVar, ACTOR_ENEMY4, 0, LVar0)
@@ -2762,7 +2762,7 @@ EvtScript N(handleEvent_802242FC) = {
                 EVT_CALL(SetActorVar, ACTOR_ENEMY4, 0, LVar0)
             EVT_END_IF
             EVT_CALL(GetLastElement, LVar0)
-            EVT_IF_FLAG(LVar0, DAMAGE_TYPE_SHOCK | DAMAGE_TYPE_BLAST)
+            EVT_IF_FLAG(LVar0, DAMAGE_TYPE_SHOCK | DAMAGE_TYPE_BLAST | DAMAGE_TYPE_SMASH)
                 EVT_CALL(GetActorVar, ACTOR_ENEMY4, 0, LVar0)
                 EVT_BITWISE_OR_CONST(LVar0, 0x40)
                 EVT_CALL(SetActorVar, ACTOR_ENEMY4, 0, LVar0)
@@ -2809,7 +2809,7 @@ EvtScript N(handleEvent_802242FC) = {
                 EVT_CALL(SetActorVar, ACTOR_ENEMY4, 0, LVar0)
             EVT_END_IF
             EVT_CALL(GetLastElement, LVar0)
-            EVT_IF_FLAG(LVar0, DAMAGE_TYPE_SHOCK | DAMAGE_TYPE_BLAST)
+            EVT_IF_FLAG(LVar0, DAMAGE_TYPE_SHOCK | DAMAGE_TYPE_BLAST | DAMAGE_TYPE_SMASH)
                 EVT_CALL(GetActorVar, ACTOR_ENEMY4, 0, LVar0)
                 EVT_BITWISE_OR_CONST(LVar0, 0x40)
                 EVT_CALL(SetActorVar, ACTOR_ENEMY4, 0, LVar0)
