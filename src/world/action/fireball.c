@@ -26,7 +26,13 @@ s32 test_fireball_first_strike(Npc* enemy) {
     f32 angleToEnemy;
     f32 distToEnemy;
 
-    Npc* fireball = get_npc_by_index(fireballStatus.activeFireballIndex);
+    Npc* fireball;
+
+    if (!fireballStatus.activeFireballIndex) {
+        return FALSE;
+    }
+
+    fireball = get_npc_by_index(fireballStatus.activeFireballIndex);
 
     enemyX = enemy->pos.x;
     enemyY = enemy->pos.y;
@@ -68,6 +74,8 @@ s32 test_fireball_first_strike(Npc* enemy) {
     distToEnemy = SQ(fireballX) + SQ(fireballZ);
 
     if (!(SQ(fireballCollRadius) + SQ(enemyCollRadius) <= distToEnemy)) {
+        free_npc_by_index(fireballStatus.activeFireballIndex);
+        fireballStatus.activeFireballIndex = NULL;
         return TRUE;
     }
     return FALSE;
@@ -75,13 +83,14 @@ s32 test_fireball_first_strike(Npc* enemy) {
 
 void fireball_hit_entity(void) {
     Entity* entity;
-
-    fireballStatus.activeFireballTime = 30; // Kill fireball on next render
+    Npc* fireballNpc = get_npc_by_index(fireballStatus.activeFireballIndex);
 
     if (NpcHitQueryColliderID < 0 || !(NpcHitQueryColliderID & COLLISION_WITH_ENTITY_BIT)) {
+        fireballNpc->moveSpeed = 0.0f;
         return;
     }
 
+    fireballStatus.activeFireballTime = 30; // Kill fireball on next render
     entity = get_entity_by_index(NpcHitQueryColliderID & ~COLLISION_WITH_ENTITY_BIT);
     entity->flags |= ENTITY_FLAG_PARTNER_COLLISION;
 
