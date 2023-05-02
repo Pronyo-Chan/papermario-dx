@@ -997,8 +997,9 @@ void npc_move_heading(Npc* npc, f32 speed, f32 yaw) {
 Npc* get_npc_unsafe(s32 npcID) {
     s32 i;
     Npc* npc;
+    PlayerData* playerData = &gPlayerData;
 
-    if (npcID == NPC_PARTNER) {
+    if (npcID == NPC_PARTNER && playerData->currentPartner != PARTNER_TWINK) {
         return NULL;
     }
 
