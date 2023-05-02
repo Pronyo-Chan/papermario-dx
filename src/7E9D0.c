@@ -565,6 +565,10 @@ void check_input_airdash(void) {
     PlayerSpinState* spinState = &gPlayerSpinState;
     PlayerSpinState* temp2 = spinState;
 
+    if(!player_has_key_item(ITEM_PWING)) {
+        return;
+    }
+
     if (!((playerStatus->flags & (PS_FLAG_NO_STATIC_COLLISION | PS_FLAG_CUTSCENE_MOVEMENT)) ||
           (playerStatus->animFlags & PA_FLAG_USING_WATT) ||
           (playerStatus->currentButtons & BUTTON_C_DOWN) ||
@@ -573,7 +577,6 @@ void check_input_airdash(void) {
         s32 actionState = playerStatus->actionState;
         s32 btnPressed = playerStatus->pressedButtons & Z_TRIG;
 
-        // TODO
         if (actionState != ACTION_STATE_RIDE) {
             if (actionState < ACTION_STATE_STEP_UP) {
                 if (actionState >= 0 && !(playerStatus->animFlags & PA_FLAG_SPINNING)) {
@@ -585,9 +588,6 @@ void check_input_airdash(void) {
                             playerStatus->gravityIntegrator[3] = 0.0f;
                             playerStatus->airdashCount += 1;
 
-                            //DEBUG
-
-                            //
                             set_action_state(ACTION_STATE_AIRDASH);
                             if (spinState->hasBufferedSpin != FALSE) {
                                 if (spinState->bufferedStickAxis.x != 0 || spinState->bufferedStickAxis.y != 0) {

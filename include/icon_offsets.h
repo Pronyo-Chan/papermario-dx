@@ -1231,3 +1231,5 @@
 
 #define ICON_key_fireball_raster 0x2D460
 #define ICON_key_fireball_palette 0x2D580
+#define ICON_key_pwing_raster 0x2D5A0
+#define ICON_key_pwing_palette 0x2D6C0

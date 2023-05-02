@@ -340,4 +340,5 @@ IconHudScriptPair gItemHudScripts[] = {
 { .enabled = &HES_Item_Boots3, .disabled = &HES_Item_Boots3 },
 { .enabled = &HES_Item_Items, .disabled = &HES_Item_Items },
 { .enabled = &HES_Item_Fireball, .disabled = &HES_Item_Fireball },
+{ .enabled = &HES_Item_PWing, .disabled = &HES_Item_PWing }
 };

@@ -724,7 +724,7 @@ enum GameFlags {
     GF_IWA10_Hammer1Block                       = GameFlag(0x2D0),
     GF_IWA10_SuperBlock                         = GameFlag(0x2D1),
     GF_IWA00_Met_Whacka                         = GameFlag(0x2D2),
-    GF_Unused_IWA_25                            = GameFlag(0x2D3),
+    GF_IWA10_PWing                              = GameFlag(0x2D3),
     GF_Unused_IWA_26                            = GameFlag(0x2D4),
     GF_Unused_IWA_27                            = GameFlag(0x2D5),
     GF_Unused_IWA_28                            = GameFlag(0x2D6),

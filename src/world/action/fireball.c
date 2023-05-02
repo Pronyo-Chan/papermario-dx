@@ -140,17 +140,6 @@ void on_fireball_render(Npc* fireballNpc) {
     }
 }
 
-s32 player_has_fireball(void) {
-    s32 i;
-    PlayerData* playerData = &gPlayerData;
-    for (i = 0; i < ARRAY_COUNT(playerData->keyItems); i++) {
-        if (playerData->keyItems[i] == ITEM_FIREBALL) {
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
 void use_fireball(void){
     NpcBlueprint sp10;
     NpcBlueprint* bp = &sp10;
@@ -162,7 +151,7 @@ void use_fireball(void){
 
     f32 playerPosX, playerPosY, playerPosZ, initialDistanceX, moveAngle;
 
-    if(!player_has_fireball()) {
+    if(!player_has_key_item(ITEM_FIREBALL)) {
         return;
     }
 

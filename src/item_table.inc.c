@@ -4763,5 +4763,18 @@ ItemData gItemTable[] = {
     .moveID = MOVE_NONE,
     .potencyA = 0,
     .potencyB = 0
+},
+{   // item 16E: P-Wing
+    .nameMsg = MSG_ItemName_PWing,
+    .fullDescMsg = MSG_ItemFullDesc_PWing,
+    .shortDescMsg = MSG_ItemShortDesc_PWing,
+    .sellValue = -1,
+    .hudElemID = ITEM_HS_INDEX(HES_Item_AutoJump),
+    .sortValue = 0,
+    .targetFlags = TARGET_FLAG_PLAYER,
+    .typeFlags = ITEM_TYPE_FLAG_KEY | ITEM_TYPE_FLAG_ENTITY_FULLSIZE,
+    .moveID = MOVE_NONE,
+    .potencyA = 0,
+    .potencyB = 0
 }
 };

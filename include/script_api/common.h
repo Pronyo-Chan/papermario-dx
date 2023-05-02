@@ -4,6 +4,8 @@
 #include "common_structs.h"
 #include "macros.h"
 
+s32 player_has_key_item(s32 itemId);
+
 ApiStatus FadeBackgroundToBlack(Evt* script, s32 isInitialCall);
 ApiStatus UnfadeBackgroundFromBlack(Evt* script, s32 isInitialCall);
 ApiStatus GetCamLookAtObjVector(Evt* script, s32 isInitialCall);

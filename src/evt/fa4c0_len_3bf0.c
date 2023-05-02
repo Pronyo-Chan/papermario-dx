@@ -500,6 +500,17 @@ ApiStatus CloseChoicePopup(Evt* script, s32 isInitialCall) {
     return ApiStatus_DONE2;
 }
 
+s32 player_has_key_item(s32 itemId) {
+    s32 i;
+    PlayerData* playerData = &gPlayerData;
+    for (i = 0; i < ARRAY_COUNT(playerData->keyItems); i++) {
+        if (playerData->keyItems[i] == itemId) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 ApiStatus HasKeyItem(Evt* script, s32 isInitialCall) {
     Bytecode* args = script->ptrReadPos;
     s32 itemID = evt_get_variable(script, *args++);

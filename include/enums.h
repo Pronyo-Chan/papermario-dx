@@ -2123,6 +2123,7 @@ enum ItemIDs {
     ITEM_BOOTS3_ICON                  = 0x0000016B,
     ITEM_ITEMS_ICON                   = 0x0000016C,
     ITEM_FIREBALL                     = 0x0000016D,
+    ITEM_PWING                        = 0x0000016E,
 };
 
 #define LOOKUP_ITEM(itemID) gItemTable[itemID & ~0xF0000]
@@ -2143,9 +2144,12 @@ enum ItemIDs {
 #define ITEM_FIRST_BADGE            ITEM_SPIN_SMASH
 #define ITEM_LAST_BADGE             ITEM_ATTACK_FX_F5
 
+#define ITEM_FIRST_ADDED_KEY        ITEM_FIREBALL
+#define ITEM_FIRST_ADDED_KEY        ITEM_FIREBALL
+
 #define ITEM_NUM_KEYS (ITEM_LAST_KEY - ITEM_FIRST_KEY + 1)
 #define ITEM_NUM_CONSUMABLES (ITEM_LAST_CONSUMABLE - ITEM_FIRST_CONSUMABLE + 1)
-#define IS_ITEM(itemID) (itemID >= ITEM_FIRST_KEY && itemID <= ITEM_LAST_CONSUMABLE)
+#define IS_ITEM(itemID) (itemID >= ITEM_FIRST_KEY && itemID <= ITEM_LAST_CONSUMABLE || itemID >= ITEM_FIRST_ADDED_KEY)
 #define IS_BADGE(itemID) (itemID >= ITEM_FIRST_BADGE && itemID <= ITEM_LAST_BADGE)
 
 // used for chest and give item events

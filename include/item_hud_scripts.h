@@ -336,3 +336,4 @@
 #define HS_INDEX_HES_Item_Boots3Icon              0x14F
 #define HS_INDEX_HES_Item_ItemsIcon               0x150
 #define HS_INDEX_HES_Item_Fireball                0x151
+#define HS_INDEX_HES_Item_PWing                   0x152

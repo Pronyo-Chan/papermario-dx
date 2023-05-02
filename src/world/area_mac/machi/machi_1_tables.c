@@ -62,7 +62,7 @@ GameVarRange N(GameFlagTable)[] = {
     VAR_RANGE_FLAG("GSWF HOS",   GF_Unused_HOS_00,                GF_NOK01_RecoveredShellA,        GF_Unused_HOS_0F),
     VAR_RANGE_FLAG("GSWF NOK",   GF_NOK01_RecoveredShellA,        GF_TRD01_Item_SmashCharge,       GF_Unused_NOK_34),
     VAR_RANGE_FLAG("GSWF TRD",   GF_TRD01_Item_SmashCharge,       GF_IWA01_Item_QuakeHammer,       GF_Unused_TRD_1D),
-    VAR_RANGE_FLAG("GSWF IWA",   GF_IWA01_Item_QuakeHammer,       GF_DRO02_Sheek_SpokeTo,          GF_Unused_IWA_25),
+    VAR_RANGE_FLAG("GSWF IWA",   GF_IWA01_Item_QuakeHammer,       GF_DRO02_Sheek_SpokeTo,          GF_IWA10_PWing),
     VAR_RANGE_FLAG("GSWF DRO",   GF_DRO02_Sheek_SpokeTo,          GF_SBK30_Met_Kolorado,           GF_Unused_DRO_10),
     VAR_RANGE_FLAG("GSWF SBK",   GF_SBK30_Met_Kolorado,           GF_ISK02_UnlockedDoor,           GF_Unused_SBK_44),
     VAR_RANGE_FLAG("GSWF ISK",   GF_ISK02_UnlockedDoor,           GF_MIM_ChoosingPath,             GF_Unused_ISK_25),

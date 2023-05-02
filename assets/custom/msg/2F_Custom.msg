@@ -21,6 +21,29 @@
 	from his hands by pressing [C-DOWN] [End]
 }
 
+#message:2F:(Menus_GotPWing) {
+	[DelayOff]
+	[Style popup]
+	[Color 0x2F]You got the[BR]
+	[Color 0x28]P-Wing![Color 0x2F]![BR]
+	[DelayOn]
+	[Wait][End]
+}
+
+#message:2F:(ItemName_PWing) {
+	P-Wing[End]
+}
+
+#message:2F:(ItemFullDesc_PWing) {
+	Allows Mario to airdash[BR]
+	by pressing [Z] mid-air [End]
+}
+
+#message:2F:(ItemShortDesc_PWing) {
+	Allows Mario to airdash[BR]
+	by pressing [Z] mid-air [End]
+}
+
 #message:2F:(NPC_KooperThanks) {
 	[Style right]
 	I found this on the way while[BR]
@@ -60,4 +83,12 @@
 	Good luck Mario! Show these [BR]
 	nasty koopas who is the boss! [BR]
 	[Wait][End]
+}
+
+#message:2F:(NPC_ParakarryWatchYourStep) {
+	[Style right]
+	Hey!!!![BR]
+	[Pause 5]Watch where you're going![BR]
+	[Wait][Next]
+	I have no time for this, move![Wait][End]
 }

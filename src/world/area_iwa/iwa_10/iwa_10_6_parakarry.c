@@ -86,6 +86,8 @@ EvtScript N(EVS_Scene_MeetParakarry) = {
     EVT_SET(LVarA, LVar0)
     EVT_SET(LVarB, 230)
     EVT_SET(LVarC, LVar2)
+
+    EVT_CALL(MakeItemEntity, ITEM_PWING, LVar3, LVar4, LVar5, ITEM_SPAWN_MODE_TOSS_HIGHER_NEVER_VANISH, GF_IWA10_PWing)
     EVT_CALL(DisablePlayerPhysics, TRUE)
     EVT_CALL(GetPlayerPos, LVar0, LVar1, LVar2)
     EVT_IF_GT(LVar2, -380)
@@ -137,21 +139,18 @@ EvtScript N(EVS_Scene_MeetParakarry) = {
     EVT_CALL(SetNpcSpeed, NPC_Parakarry, EVT_FLOAT(3.0))
     EVT_CALL(NpcMoveTo, NPC_Parakarry, LVar0, LVar2, 0)
     EVT_WAIT(10 * DT)
-    EVT_CALL(SetNpcAnimation, NPC_Parakarry, ANIM_WorldParakarry_Idle)
-    EVT_CALL(SpeakToPlayer, NPC_Parakarry, ANIM_WorldParakarry_Talk, ANIM_WorldParakarry_Idle, 0, MSG_CH2_000F)
+    EVT_CALL(SetNpcAnimation, NPC_Parakarry, ANIM_WorldParakarry_CarryHeavy)
+    EVT_CALL(SpeakToPlayer, NPC_Parakarry, ANIM_WorldParakarry_CarryHeavy, ANIM_WorldParakarry_Idle, 0, MSG_NPC_ParakarryWatchYourStep)
     EVT_WAIT(10 * DT)
+    EVT_CALL(SetNpcAnimation, NPC_Parakarry, ANIM_WorldParakarry_Idle)
+    EVT_CALL(SetNpcFlagBits, NPC_Parakarry, NPC_FLAG_IGNORE_WORLD_COLLISION | NPC_FLAG_IGNORE_PLAYER_COLLISION, TRUE)
     EVT_CALL(GetNpcPos, NPC_Parakarry, LVar0, LVar1, LVar2)
-    EVT_CALL(NpcJump0, NPC_Parakarry, LVar0, LVar1, LVar2, 10)
-    EVT_CALL(SpeakToPlayer, NPC_Parakarry, ANIM_WorldParakarry_Talk, ANIM_WorldParakarry_Idle, 0, MSG_CH2_0010)
-    EVT_CALL(SetPlayerAnimation, ANIM_MarioW2_SpeakUp)
-    EVT_WAIT(20 * DT)
-    EVT_CALL(SetPlayerAnimation, ANIM_Mario1_Idle)
-    EVT_CALL(SpeakToPlayer, NPC_Parakarry, ANIM_WorldParakarry_Talk, ANIM_WorldParakarry_Idle, 0, MSG_CH2_0011)
+    EVT_CALL(NpcMoveTo, NPC_Parakarry, -800,  -400, 60)
+    EVT_CALL(SetNpcPos, NPC_Parakarry, NPC_DISPOSE_LOCATION)
     EVT_SET(GB_StoryProgress, STORY_CH2_SPOKE_WITH_PARAKARRY)
     EVT_CALL(ResetCam, CAM_DEFAULT, EVT_FLOAT(3.0 / DT))
     EVT_CALL(DisablePlayerPhysics, FALSE)
     EVT_CALL(DisablePlayerInput, FALSE)
-    EVT_CALL(BindNpcAI, NPC_Parakarry, EVT_PTR(N(EVS_NpcIdle_Parakarry)))
     EVT_RETURN
     EVT_END
 };
@@ -296,8 +295,6 @@ EvtScript N(EVS_NpcInit_Parakarry) = {
     EVT_SWITCH(GB_StoryProgress)
         EVT_CASE_LT(STORY_CH2_SPOKE_WITH_PARAKARRY)
             EVT_CALL(SetNpcPos, NPC_Parakarry, NPC_DISPOSE_LOCATION)
-        EVT_CASE_LT(STORY_CH2_PARAKARRY_JOINED_PARTY)
-            EVT_CALL(BindNpcIdle, NPC_SELF, EVT_PTR(N(EVS_NpcIdle_Parakarry)))
         EVT_CASE_DEFAULT
             EVT_CALL(RemoveNpc, NPC_SELF)
     EVT_END_SWITCH
