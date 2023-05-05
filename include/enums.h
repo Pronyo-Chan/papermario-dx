@@ -5462,6 +5462,7 @@ enum ColliderFlags {
     COLLIDER_FLAGS_SURFACE_TYPE_MASK = 0x000000FF,
 
 //    SURFACE_TYPE_DEFAULT            = 0,
+    SURFACE_TYPE_GHOSTABLE          = 10, ///< used to make ghost mario pass through
     SURFACE_TYPE_HEDGES             = 9, ///< used within hedge maze in flo_11
     SURFACE_TYPE_SNOW               = 8,
     SURFACE_TYPE_CLOUD              = 7, ///< used with clouds in flo_19 and flo_21

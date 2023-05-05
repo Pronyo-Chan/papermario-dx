@@ -57,28 +57,24 @@ API_CALLABLE(N(AddConveyorPush)) {
     }
 
     one = 1;
-    if (partnerStatus->actingPartner == PARTNER_BOW) {
-        if (partnerStatus->partnerActionState != PARTNER_ACTION_NONE && playerStatus->alpha1 == 128) {
-            x = playerStatus->position.x;
-            y = playerStatus->position.y;
-            z = playerStatus->position.z;
-            outLength = 1000.0f;
-            hit = player_raycast_below_cam_relative(playerStatus,
-                &x, &y, &z, &outLength,
-                &hitRx, &hitRz, &hitDirX, &hitDirZ
-            );
+    x = playerStatus->position.x;
+    y = playerStatus->position.y;
+    z = playerStatus->position.z;
+    outLength = 1000.0f;
+    hit = player_raycast_below_cam_relative(playerStatus,
+        &x, &y, &z, &outLength,
+        &hitRx, &hitRz, &hitDirX, &hitDirZ
+    );
 
-            for (i = 0; i < ARRAY_COUNT(N(ConveyorColliders)); i++) {
-                if (hit == N(ConveyorColliders)[i]) {
-                    playerStatus->pushVelocity.x = N(ConveyorPushVels)[i][0];
-                    playerStatus->pushVelocity.z = N(ConveyorPushVels)[i][one]; // TODO needed to match
-                }
-            }
-            script->varTable[0] = 1;
-            return ApiStatus_DONE2;
+    for (i = 0; i < ARRAY_COUNT(N(ConveyorColliders)); i++) {
+        if (hit == N(ConveyorColliders)[i]) {
+            playerStatus->pushVelocity.x = N(ConveyorPushVels)[i][0];
+            playerStatus->pushVelocity.z = N(ConveyorPushVels)[i][one]; // TODO needed to match
         }
     }
-    one = 1;
+    script->varTable[0] = 1;
+    return ApiStatus_DONE2;
+    /*one = 1;
     if (partnerStatus->actingPartner != PARTNER_LAKILESTER ||
         partnerStatus->partnerActionState == PARTNER_ACTION_NONE)
     {
@@ -99,12 +95,14 @@ API_CALLABLE(N(AddConveyorPush)) {
                 partner_clear_player_tracking(partner);
             }
         }
-    }
+    }*/
 
     return ApiStatus_DONE2;
 }
 
 EvtScript N(EVS_SetupConveyors) = {
+    EVT_CALL(ModifyColliderFlags, MODIFY_COLLIDER_FLAGS_SET_SURFACE, COLLIDER_o914, SURFACE_TYPE_GHOSTABLE)
+    EVT_CALL(ModifyColliderFlags, MODIFY_COLLIDER_FLAGS_SET_SURFACE, COLLIDER_o858, SURFACE_TYPE_GHOSTABLE)
     EVT_SET_GROUP(EVT_GROUP_0B)
     EVT_CALL(EnableTexPanning, MODEL_1, TRUE)
     EVT_CALL(EnableTexPanning, MODEL_3, TRUE)

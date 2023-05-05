@@ -451,6 +451,15 @@ s32 player_raycast_general(s32 mode, f32 startX, f32 startY, f32 startZ, f32 dir
     colliderID = test_ray_colliders(ignoreFlags, startX, startY, startZ, dirX, dirY, dirZ,
         hitX, hitY, hitZ, hitDepth, hitNx, hitNy, hitNz);
 
+    if(colliderID > -1 && is_ability_active(ABILITY_SLOW_GHOST)) {
+        s32 surfaceType;
+        surfaceType = get_collider_flags(colliderID);
+
+        if(surfaceType == SURFACE_TYPE_GHOSTABLE) {
+            colliderID = -1;
+        }
+    }
+
     if (ret < 0) {
         ret = colliderID;
     }
