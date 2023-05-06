@@ -113,7 +113,7 @@ typedef struct RotatingPlatform {
 API_CALLABLE(N(UpdateRotatingPlatforms)) {
     PlayerStatus* playerStatus = &gPlayerStatus;
     Matrix4f sp20, sp60, spA0, spE0;
-    Npc* partner = get_npc_unsafe(NPC_PARTNER);
+    //Npc* partner = get_npc_unsafe(NPC_PARTNER);
     Model* axisModel = get_model_from_list_index(get_model_list_index_from_tree_index(MODEL_fl));
     Model* ringModel = get_model_from_list_index(get_model_list_index_from_tree_index(MODEL_1_0));
     f32 ox, oy, oz;
@@ -189,11 +189,11 @@ API_CALLABLE(N(UpdateRotatingPlatforms)) {
             playerStatus->pushVelocity.y = oy - it->lastRelativePos.y;
             playerStatus->pushVelocity.z = oz - it->lastRelativePos.z;
         }
-        if (partner->currentFloor == N(RotatingPlatformColliders)[i]) {
+        /*if (partner->currentFloor == N(RotatingPlatformColliders)[i]) {
             partner->pos.x += ox - it->lastRelativePos.x;
             partner->pos.y += oy - it->lastRelativePos.y;
             partner->pos.z += oz - it->lastRelativePos.z;
-        }
+        }*/
         it->lastRelativePos.x = ox;
         it->lastRelativePos.y = oy;
         it->lastRelativePos.z = oz;
